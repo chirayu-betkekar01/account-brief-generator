@@ -16,10 +16,18 @@ repos:
       - id: detect-aws-credentials
         args: [--allow-missing-credentials]
 
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.109.2
+  # A local hook instead of the popular antonbabenko/pre-commit-terraform one: that hook is a
+  # bash script, and on Windows `bash` resolves to the (empty) WSL stub and fails. Calling
+  # `terraform` directly works on Windows, macOS and Linux. Like other fixer hooks it
+  # reformats files, then fails the commit once so you can re-stage the result.
+  - repo: local
     hooks:
-      - id: terraform_fmt
+      - id: terraform-fmt
+        name: terraform fmt
+        entry: terraform fmt -recursive infra
+        language: system
+        files: \.tf$
+        pass_filenames: false
 
   # Scans staged changes for secrets (AWS keys, tokens, ...). Account IDs are caught by
   # the project's own .gitignore rules (tfstate/tfvars) rather than a regex here.
