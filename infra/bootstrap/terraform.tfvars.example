@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (git-ignored) and edit.
+alert_emails = ["you@example.com"]
+
+# Optional overrides:
+# monthly_budget_usd = 25
+# region             = "us-east-1"
