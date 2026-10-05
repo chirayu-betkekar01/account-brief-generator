@@ -1,0 +1,48 @@
+# --- Terraform: state and plans contain account IDs, ARNs and sometimes secrets ---
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# Real variable values (alert email etc.). Only the *.example templates are committed.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+# NOTE: .terraform.lock.hcl IS committed on purpose (pins provider versions + hashes).
+
+# --- Secrets / local config ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+.streamlit/secrets.toml
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Build artefacts (Lambda zips are produced by Terraform's archive provider) ---
+build/
+dist/
+*.zip
+
+# --- Editors / OS / assistant tooling ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.claude/settings.local.json
