@@ -23,6 +23,9 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **State** | Terraform's record of what it has built. Lets it compute the difference between your files and reality. Contains account IDs, so it is never committed. |
 | **Plan / apply** | `plan` = show what *would* change (read-only). `apply` = make it so. We always read the plan first. |
 | **Lock file** | `.terraform.lock.hcl` pins the exact provider version and checksums so every machine builds the same thing. Committed on purpose. |
+| **Saved plan** (`-out`) | A plan written to a file so `apply` runs exactly that and nothing recomputed. A plan alone is only a prediction. |
+| **ARN** | Amazon Resource Name: the unique address of any AWS thing, e.g. `arn:aws:budgets::<account>:budget/<name>`. IAM policies point at ARNs. |
+| **Tags / `default_tags`** | Key-value labels on resources (here `Project=...`). The Terraform provider can stamp them on everything; tagging has its own IAM permissions. |
 | **AWS Budgets** | Watches spending and e-mails you at thresholds. A smoke alarm, not a sprinkler: it warns, it does not stop spending. |
 | **Serverless / pay-per-use** | You pay only while something runs. Idle cost is about zero. |
 | **TCO** | Total cost of ownership: all costs of an option over its life, not just the sticker price. |
@@ -50,11 +53,17 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 
 ## 3. Phase log
 
-### Phase 1: budget alarm and foundations *(in progress)*
-- Built: budget module, bootstrap stack, Makefile, pricing script, cost model.
-- Tooling installed: Terraform 1.16.4, GNU make 4.4.1 (AWS CLI pending admin approval), Python venv with pytest/boto3/moto/pre-commit/streamlit.
+### Phase 1: budget alarm and foundations *(applied; exercise and interview Qs pending)*
+- Built and **applied**: one `aws_budgets_budget` ($25/month, 4 actual + 1 forecast alert, 1 e-mail subscriber). Cost: $0. Verified from AWS's side with `aws budgets describe-budget`, not just Terraform's own report.
+- Tooling: Terraform 1.16.4, GNU make 4.4.1, AWS CLI 2.37.9, Python venv with pytest/boto3/moto/pre-commit/streamlit.
+- Sign-in: IAM user + MFA, `aws login` (short-lived credentials, nothing long-lived on disk). Terraform picked the profile up via `AWS_PROFILE`; no workaround was needed.
+- Workflow learned: `plan -out=tfplan` saves exactly what you reviewed; `apply tfplan` then executes only that. The plan is a preview, never a file you edit.
 - **Your exercise:** IAM policy statement allowing a deployer to manage only this budget. *(pending)*
-- Lesson already banked: an unverified summary (the budgets IAM action list) was wrong; the verified list came from AWS's own policy dataset. Verify, then trust.
+- Lessons banked:
+  1. An unverified summary (the Budgets IAM action list) was wrong; the verified list came from AWS's own policy dataset. Verify, then trust.
+  2. The `.example` template is tracked by git; real values belong in the git-ignored copy. A real e-mail was typed into the template and caught before it was committed.
+  3. The account already showed about $0.10 of spend this month before we created anything, and the account-wide budget counts it against the $25.
+  4. A script that "works" can still be wrong: the first price check returned a plausible but incorrect Haiku price until it was made to reject ambiguous matches.
 
 ---
 
