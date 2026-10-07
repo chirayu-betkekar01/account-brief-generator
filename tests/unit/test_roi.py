@@ -1,7 +1,8 @@
-"""The specification for compute_roi. Hand-computed numbers; see the table in each test.
+"""The specification for compute_roi. Hand-computed numbers; see the comment in each test.
 
 Base case: on-prem 1,000,000/yr, 100 servers, 50 TB, 10% growth, with
-  AWS 4,000 per server-year x 0.5 rightsizing, 300 per TB-year, 2,000 migration per server.
+  AWS 4,000 per server-year x 0.5 rightsizing, 300 per TB-year, 2,000 migration per server,
+  and no retained on-prem cost (retained_cost_fraction = 0) so the arithmetic stays easy to follow.
 Growth multipliers by year: 1.00, 1.10, 1.21.
 """
 
@@ -16,6 +17,7 @@ ASSUMPTIONS = {
     "rightsizing_factor": 0.5,
     "aws_cost_per_tb_year_usd": 300,
     "migration_cost_per_server_usd": 2000,
+    "retained_cost_fraction": 0.0,
 }
 BASE = {
     "on_prem_annual_cost_usd": 1_000_000,
@@ -26,6 +28,7 @@ BASE = {
 YEAR_MONEY_FIELDS = [
     "on_prem_cost_usd",
     "aws_run_cost_usd",
+    "retained_cost_usd",
     "migration_cost_usd",
     "aws_total_usd",
     "savings_usd",
@@ -60,8 +63,23 @@ def test_migration_is_a_one_off_in_year_one():
     assert column(roi(), "migration_cost_usd") == pytest.approx([200_000, 0, 0])
 
 
-def test_aws_total_is_run_cost_plus_migration():
+def test_aws_total_is_run_cost_plus_retained_plus_migration():
     assert column(roi(), "aws_total_usd") == pytest.approx([415_000, 236_500, 260_150])
+
+
+def test_retained_cost_is_a_share_of_the_on_prem_bill_that_never_goes_away():
+    # 25% of on-prem (staff, licences, network) stays: 250,000 / 275,000 / 302,500
+    # AWS total = run + retained + migration = 665,000 / 511,500 / 562,650
+    result = roi(assumptions={"retained_cost_fraction": 0.25})
+    assert column(result, "retained_cost_usd") == pytest.approx([250_000, 275_000, 302_500])
+    assert column(result, "aws_total_usd") == pytest.approx([665_000, 511_500, 562_650])
+    assert result["totals"]["aws_usd"] == pytest.approx(1_739_150)
+    assert result["totals"]["savings_usd"] == pytest.approx(1_570_850)
+    assert result["totals"]["roi_pct"] == 90.3
+
+
+def test_no_retained_cost_when_the_fraction_is_zero():
+    assert column(roi(), "retained_cost_usd") == pytest.approx([0, 0, 0])
 
 
 def test_savings_and_cumulative_savings():
@@ -153,6 +171,8 @@ def test_a_missing_assumption_raises_value_error(missing):
     [
         {"rightsizing_factor": 0},
         {"rightsizing_factor": 1.5},
+        {"retained_cost_fraction": -0.1},
+        {"retained_cost_fraction": 1},
         {"aws_cost_per_server_year_usd": -1},
         {"aws_cost_per_tb_year_usd": -1},
         {"migration_cost_per_server_usd": -1},
