@@ -22,6 +22,7 @@ Ask for **more depth** or **faster** at any point.
 
 | File | What it teaches | Time |
 |---|---|---|
+| [../project-overview.md](../project-overview.md) | **Start here.** What we are building, why, the features, the architecture diagrams, safety, cost and limits | 30 min |
 | [phase-1-foundations.md](phase-1-foundations.md) | AWS accounts, IAM, Terraform basics, the budget alarm, why a budget is a warning not a brake | 45 min |
 | [phase-2-lambdas-and-data.md](phase-2-lambdas-and-data.md) | Lambda, DynamoDB, one IAM role per function, test-first development, the ROI model | 60 min |
 | [exercises.md](exercises.md) | Every hands-on exercise (done and not yet done), with hints, model answers and review rubrics | varies |
