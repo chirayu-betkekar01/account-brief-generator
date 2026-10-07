@@ -66,8 +66,8 @@ flowchart LR
 | `chirayu-admin` (you, via `aws login`) | Deploy everything. Admin, sandbox only. | done |
 | Lambda role: `account_profile` | Read one DynamoDB table; write its own logs | 2 |
 | Lambda role: `roi_estimator` | Write its own logs only | 2 |
-| Lambda role: `kb_retrieve` | Call `Retrieve` on one knowledge base; write its own logs | 2/3 |
-| Knowledge Base service role | Read the docs bucket; call the Titan model; read and write the one S3 Vectors index | 3 |
+| Lambda role: `kb_retrieve` | Call `Retrieve` on one knowledge base; write its own logs | 3 (applied) |
+| Knowledge Base service role | List the docs bucket and read `docs/*`; call the Titan V2 model; five S3 Vectors actions on the one index | 3 (applied) |
 | Gateway service role | Invoke exactly the three Lambdas | 4 |
 | Harness execution role | Invoke the one model profile; apply the one guardrail; invoke the one gateway; write logs and traces | 4 |
 
@@ -81,7 +81,7 @@ Exact action names are verified against AWS docs at build time, not from memory.
 | `modules/storage_data` | DynamoDB table with seed data (applied); S3 docs bucket (Phase 3) | 2 (applied), 3 |
 | `modules/lambda_function` | Reusable unit: one function + its own role + log group with retention; called once per tool | 2 (applied for 2 of 3 tools) |
 | `infra/main` | The main stack that wires the modules together and refuses to plan without the budget | 2 (applied) |
-| `modules/knowledge_base` | S3 Vectors bucket + index, Knowledge Base, data source | 3 |
+| `modules/knowledge_base` | Docs bucket + files, S3 Vectors bucket + index, service role, Knowledge Base, data source (applied; ingest with `make ingest`) | 3 (applied) |
 | `modules/guardrails` | PII, denied topics, grounding filter | 4 |
 | `modules/agent` | Gateway, 3 targets, harness, roles | 4 |
 | `modules/monitoring` | Metric filters, dashboard, alarm | 4 |

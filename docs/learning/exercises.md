@@ -170,14 +170,54 @@ create nothing (the budget lookup and the zip packaging, which run at plan time)
 
 ---
 
+## E6. The retrieval detective (Phase 3, open)
+
+**Goal:** Learn how semantic search behaves, and why "the right document" is a ranking question, not a yes/no.
+
+**Spec:** With the stack deployed, call `kb_retrieve` (or `aws lambda invoke`) with `max_results: 8` and record the rank and score of
+the best document for each of these questions. Predict the rank *before* you run it.
+1. "What storage class suits an archive nobody opens?"
+2. "Do I need a BAA to store patient records?"
+3. "Glacier"  (one word)
+4. "How do I make my application cheaper?"
+5. "What is the capital of France?"
+Then answer: (a) which question gave the lowest top score and why; (b) what score would you use as a "relevant enough" threshold on
+this corpus; (c) change one document so question 3 ranks its best document higher, re-run `make apply` and `make ingest`, and compare.
+
+**Hints:** Short queries carry little meaning for an embedding model. The off-topic probe scored 0.534 and relevant ones 0.7 to 0.84.
+
+<details><summary>What we measured</summary>
+
+For five smoke questions the expected document ranked #1 for four and #4 for "move a large VMware estate without rewriting
+applications" (0.672 against 0.776 for the top result). The off-topic "best pizza topping" scored 0.534. A threshold near 0.6 separates
+them on this corpus, but it is corpus-specific: re-measure after any change to the documents or the embedding model.
+</details>
+
+**Review rubric:** predicts before measuring (must); explains rank by meaning, not keywords (strong); proposes a threshold with evidence
+and says it is corpus-specific (strong); notices that one-word queries are weak (good); links it to why hybrid search exists (bonus).
+
+---
+
 ## Planned exercises (documented now, run in the matching phase)
 
-### P3. Write the Knowledge Base service-role IAM statement (Phase 3)
-Write the policy for the role Bedrock assumes to build the knowledge base: read one S3 docs bucket, call one
-embedding model, read/write one S3 Vectors index. Same rules as E1 (no wildcards, scoped ARNs, verified action
-names, a comment per action). *Rubric:* three statements (bucket read, model invoke, vector index), each scoped;
-model ARN is the foundation-model ARN, not `*`; trust policy limited to the Bedrock service with a source-account
-condition (bonus: explains the confused-deputy problem).
+### P3. Write the Knowledge Base service-role IAM statement (Phase 3, build done; practise by redoing it)
+The role was written during the build (see `infra/modules/knowledge_base/main.tf`). To practise, write it yourself *before* reading it.
+**Spec:** the role Bedrock assumes to build and query the knowledge base. Write (1) the trust policy and (2) the permission statements:
+list and read one docs bucket (only the `docs/` prefix), embed with one model, and use one S3 Vectors index. Same rules as E1: no wildcard
+actions, scoped ARNs, action names from AWS documentation, a comment per statement.
+**Hints:** the trust policy needs `aws:SourceAccount` and an `aws:SourceArn` condition (what is the wildcard for, and why can't you name
+the knowledge base yet?); S3 data-source reads should be limited by `aws:ResourceAccount`; AWS documents exactly five S3 Vectors actions for this role.
+**Rubric:** three kinds of statement (bucket, model, vector index), each scoped; the model ARN is the foundation-model ARN, not `*`;
+the trust policy is limited to the Bedrock service with a source-account condition (bonus: explains the confused-deputy problem);
+`GetObject` limited to the prefix (strong).
+<details><summary>Model answer</summary>
+
+Trust: principal `bedrock.amazonaws.com`; conditions `StringEquals aws:SourceAccount = <account>` and `ArnLike aws:SourceArn =
+arn:aws:bedrock:us-east-1:<account>:knowledge-base/*`. Permissions: `s3:ListBucket` on the bucket; `s3:GetObject` on `<bucket>/docs/*` (both with
+`aws:ResourceAccount`); `bedrock:InvokeModel` on `arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0`; and
+`s3vectors:PutVectors`, `GetVectors`, `DeleteVectors`, `QueryVectors`, `GetIndex` on
+`arn:aws:s3vectors:us-east-1:<account>:bucket/<vector-bucket>/index/<index>`. Source: AWS documentation page "Create a service role for Amazon Bedrock Knowledge Bases".
+</details>
 
 ### P4. Write the agent system prompt (Phase 4)
 Write the instructions that make the agent produce the brief in the required structure. *Acceptance:* names all six

@@ -42,6 +42,17 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **Smoke test** | A short check against the DEPLOYED system. Unit tests prove the code is right; the smoke test proves the deployment is right. |
 | **Retained cost** | The share of the on-prem bill that survives migration (staff, licences, network). Leaving it out inflates ROI absurdly. |
 | **Outside-in vs inside-out** | Pre-sales estimate from public info and benchmarks (low confidence) vs from the customer's own measured data (high confidence). |
+| **Embedding** | A text's meaning turned into a list of numbers (1,024 for Titan V2). Similar meanings give similar lists. |
+| **Vector / cosine similarity** | A vector is that list of numbers; cosine similarity measures how closely two vectors point the same way. |
+| **Semantic vs hybrid search** | Semantic ranks by meaning only; hybrid adds keyword matching. S3 Vectors is semantic-only, so a literal term can lose to a closer-in-meaning document. |
+| **RAG** | Retrieval-augmented generation: fetch relevant passages first, then let the model answer from them. The main defence against invented facts. |
+| **Chunking** | Cutting documents into pieces that are each about one thing, with a little overlap. Ours stay whole (about 200 tokens against a 512 limit). |
+| **Knowledge Base (Bedrock)** | The managed pipeline: read S3 files, chunk, embed, store vectors, answer `Retrieve` calls. |
+| **Ingestion job** | The run that reads the documents, embeds them and fills the index. Terraform cannot start it; `make ingest` does. |
+| **Metadata file** | `<doc>.metadata.json` beside a document; its attributes (title, source_url...) come back with each passage so the agent can cite. |
+| **S3 Vectors** | Vector storage inside S3: pay per use, no hourly floor, semantic search only. |
+| **Non-filterable metadata** | Metadata stored with a vector but not usable in filters. Bedrock needs its two bookkeeping keys marked this way. |
+| **Relevance score** | How close a passage is to the question (0 to 1 here). Search always returns something, so the score is how you tell relevant from irrelevant. |
 
 *(More terms are added as each phase introduces them: Lambda, DynamoDB, embeddings, RAG, Guardrails, AgentCore, MCP, inference profile, ...)*
 
@@ -69,6 +80,11 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 16 | **Terraform creates the log groups (14-day retention)** | Let Lambda create them | Auto-created groups never expire (billed forever) and the role would need `CreateLogGroup`. | n/a |
 | 17 | **Native DynamoDB attributes** | One JSON blob per item | Real types and future queryability; teaches the Decimal pitfall. | Truly schemaless payloads. |
 | 18 | **Apply from a saved plan; verify after** | `apply` with auto-approve | Executes exactly what was reviewed; post-apply read-back covers what a plan cannot show (IAM JSON). | n/a |
+| 19 | **A `kb_retrieve` Lambda, not the Gateway's knowledge-base connector** | The built-in connector | AWS documents the connector as supported only for Bedrock *Managed* Knowledge Bases, a different, dearer product than our S3 Vectors one. | Moving to a Managed Knowledge Base (then drop the Lambda). |
+| 20 | **Index: float32, 1024 dimensions, cosine; FIXED_SIZE chunks of 512 tokens, 10% overlap** | 256/512 dimensions, hierarchical or semantic chunking | Matches Titan V2's default quality; hierarchical chunking can exceed S3 Vectors' metadata limit; our documents are short anyway. | Much larger or structured documents. |
+| 21 | **Paraphrased, sourced, dated documents with metadata sidecars** | Copying AWS text verbatim; unsourced notes | Avoids misquoting and copyright issues, and every passage can be traced and re-checked. | A licensed documentation mirror. |
+| 22 | **Test what the agent receives (default 4 passages), not an arbitrary top-3** | Loosening the test silently | The right document ranked #4 for one question; the honest test is whether it is among the passages the agent reads. The finding is recorded, not hidden. | n/a |
+| 23 | **KB role scoped to the `docs/` prefix, one model, one index; no `ListFoundationModels`** | AWS's broader example policy | Least privilege: read-only on one prefix, five documented vector actions on one index. It worked first time without the extra list actions. | A failure traced to a missing permission. |
 
 ---
 
@@ -98,6 +114,17 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
   4. Git Bash rewrites `/aws/...` paths; set `MSYS_NO_PATHCONV=1`.
   5. A pre-sales ROI is a hypothesis with a confidence level, not a result (see open questions).
 
+### Phase 3: knowledge base *(deployed 2026-10-07; full notes in `docs/learning/phase-3-knowledge-base.md`)*
+- Built and **applied** (48 resources, under $0.01, $0 idle): docs bucket + 34 files, S3 Vectors bucket and index, least-privilege service role, Bedrock knowledge base and data source, the `kb_retrieve` Lambda.
+- `make ingest`: 17 of 17 documents indexed, 0 failed. Smoke test: 22 of 22. IAM read back from AWS matched the design.
+- Retrieval experiment: expected document ranked #1 for four of five questions and #4 for the fifth; an off-topic question still scored 0.534 (relevant 0.7 to 0.84).
+- Lessons banked:
+  1. Semantic search ranks by intent; search always returns something, so use the score.
+  2. Verify SDK field names against the service model (the ingestion statistics names in a first draft did not exist).
+  3. Stage commits by path; a `git add -A` earlier in a command swallowed three commits into one (fixed with a soft reset, local only).
+  4. Source content must be checked against the live page: Mainframe Modernization is closed to new customers, which changes the advice.
+  5. A Gateway connector's name ("Knowledge Bases") can hide a restriction ("Managed" only); read the fine print.
+
 ---
 
 ## 4. Interview Q&A
@@ -113,6 +140,10 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 2 | What breaks at 100x traffic? | *(model answer)* | | Lambda scales itself; check account concurrency, DynamoDB hot keys (ours is one lookup per request), the model's rate limits (the real constraint), and cost (tokens dominate). Alarm on throttles and errors, and load-test the whole chain. |
 | 2 | How do you justify ROI assumptions to a skeptical CFO? | *(model answer)* | | Separate sourced numbers (price list) from judgement calls (right-sizing, retained cost, migration effort); show sensitivity (26% to 104% ROI across one assumption); propose validating in a workshop; report losing cases honestly. |
 | 2 | Where does the customer's data come from in real pre-sales? | *(discussed live)* | You were right to challenge it: an SE rarely has accurate numbers before the first meeting. | Start outside-in (public info, benchmarks, low confidence); get ballparks in the meeting; move inside-out with their inventory and finance data or an assessment tool; present ranges, and use sensitivity to choose which discovery question to ask first. |
+| 3 | Why S3 Vectors for the knowledge base? | *(model answer)* | | Pay-per-use with no hourly floor, so idle is about $0 (OpenSearch Serverless has a minimum that would dominate the budget); corpus is about 4,000 tokens. Trade-off: semantic-only, measured (a keyword-heavy question ranked the best document 4th). |
+| 3 | When would you outgrow it? | *(model answer)* | | Hybrid search, richer metadata filtering than 35 keys, or low latency at high query rates; or when retrieval hit-rate plateaus. Keep chunking and the evaluation set constant to compare fairly. |
+| 3 | How do you keep RAG answers trustworthy? | *(model answer)* | | Curated, cited, dated sources; use the relevance score with a threshold; make 'not found' an explicit answer; evaluate with fixed questions and fabrication traps; add a post-answer grounding check. |
+| 3 | The model says something your documents do not support. What do you do? | *(model answer)* | | Decide whether retrieval missed or generation drifted by checking the passages returned; fix corpus/query or tighten instructions and add a grounding check; add the case to the evaluation set. |
 
 ---
 
@@ -122,3 +153,4 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 - Which AgentCore microVM generation (v1 or v2) does the harness bill at? *(measure in Phase 4)*
 - **Data provenance and ranges.** Should each ROI input carry a source label (customer-stated / benchmark / unknown) and should the tool return low/base/high cases, with the most sensitive assumption driving the first discovery question? *(proposed for Phase 4; add a provenance note to the overview limitations)*
 - Phase 1 leftovers: the IAM statement (E1) and Q2 remain open in `docs/learning/exercises.md`.
+- **Relevance threshold.** An off-topic question scored 0.534 and relevant ones 0.7 to 0.84. Where should the cutoff live (the Lambda, the agent's instructions, or both) and what value? About 0.6 on this corpus; re-measure after any corpus or model change. *(decide in Phase 4, measure in Phase 5)*

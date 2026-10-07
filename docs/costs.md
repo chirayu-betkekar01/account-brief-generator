@@ -135,8 +135,9 @@ Projected spend by phase (Nova 2 Lite, conservative):
 | `make destroy` | Removes the whole main stack, keeps the budget | Added with the main stack |
 | `make destroy-all` | Removes the main stack, then the budget | Added with the main stack |
 
-After Phase 2, `make destroy` removes the 15 Phase 2 resources (table, rows, 2 Lambdas, roles, policies, log groups,
-budget guard). All of them cost $0 while idle; the budget stays.
+After Phase 3, `make destroy` removes all 63 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
+roles, policies, log groups, budget guard; 48 from Phase 3: docs bucket and 34 files, vector bucket and index,
+knowledge base and data source, service role, `kb_retrieve`). All of them cost $0 while idle; the budget stays.
 
 ## 7. Actual spend log
 
@@ -147,3 +148,4 @@ completed the next day.
 |---|---|---|---|
 | 2026-10-05 | Account baseline before the project | n/a | about $0.105 for the month |
 | 2026-10-07 | Phase 2 applied: DynamoDB table (5 rows), 2 Lambdas, 2 log groups, IAM; about 12 smoke-test invocations | $0.00 | *check 2026-10-08* |
+| 2026-10-07 | Phase 3 applied: S3 docs bucket (34 files), S3 Vectors bucket and index, Bedrock knowledge base, `kb_retrieve`; one ingestion job (17 documents, about 4,000 tokens embedded); about 40 test searches | under $0.01 | *check 2026-10-08* |

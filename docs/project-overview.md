@@ -11,7 +11,7 @@ Read it top to bottom once; after that, use the headings as a reference.
 - **BUILT**: code written and tested on the laptop; waiting for the deploy approval.
 - **PLANNED**: designed, not yet built.
 
-*(Status as of 2026-10-07: the budget alarm, the accounts table and the account lookup and ROI tools are LIVE and smoke-tested; everything else is PLANNED.)*
+*(Status as of 2026-10-07: the budget alarm, the accounts table, the knowledge base and all three tools are LIVE and smoke-tested; the agent, guardrail and monitoring are PLANNED.)*
 
 ---
 
@@ -78,7 +78,7 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 |---|---|---|
 | **Account profile lookup** | Finds a company by name (case and spacing tolerant) in a DynamoDB table; returns an explicit "not found" instead of inventing data | LIVE |
 | **3-year ROI / TCO estimator** | Pure-Python model comparing staying on-prem with moving to AWS; assumptions in a config file and shown in every answer | LIVE |
-| **Best-practice knowledge base** | Semantic search over short AWS-doc excerpts, returning passages with source links | PLANNED (Phase 3) |
+| **Best-practice knowledge base** | Semantic search over 17 short, sourced summaries of AWS documentation, returning passages with source links and relevance scores | LIVE |
 | **The agent** | A managed loop (Amazon Bedrock AgentCore) that reads your request, decides which tools to call, and assembles the brief | PLANNED (Phase 4) |
 | **Guardrails** | Blocks personal data (PII) in outputs and denies off-topic requests; a post-answer grounding check | PLANNED (Phase 4) |
 | **Monitoring** | Log retention, error and latency metrics, a dashboard, an alarm | PLANNED (Phase 4) |
@@ -146,8 +146,8 @@ flowchart LR
     classDef live fill:#d1fae5,stroke:#059669,color:#064e3b;
     classDef built fill:#dbeafe,stroke:#2563eb,color:#1e3a8a;
     classDef planned fill:#f3f4f6,stroke:#9ca3af,color:#374151;
-    class budget,l1,l2,ddb,cfg live;
-    class user,harness,gateway,guardrail,l3,kb,vec,docs,titan,cw planned;
+    class budget,l1,l2,l3,ddb,cfg,kb,vec,docs,titan live;
+    class user,harness,gateway,guardrail,cw planned;
 ```
 
 ### 5.2 The same picture in plain text
@@ -165,11 +165,11 @@ flowchart LR
    +--------|-----------------------|-----------------------|----------------+
             v                       v                       v
      account_profile          roi_estimator            kb_retrieve        <- 3 Lambdas,
-       (BUILT)                   (BUILT)                (planned)            one IAM role each
+        (LIVE)                    (LIVE)                 (LIVE)              one IAM role each
             |                       |                       |
             v                       v                       v
    DynamoDB: 5 fictional     assumptions.json        Bedrock Knowledge Base
-   companies (BUILT)         (BUILT)                   |            |
+   companies (LIVE)          (LIVE)                    |            |
                                                        v            v
                                                 S3 Vectors      Titan embeddings
                                                 (search index)  (text -> vectors)
@@ -247,8 +247,8 @@ sequenceDiagram
 | You (`chirayu-admin`, MFA, short-lived `aws login` credentials) | Deploy everything. Administrator rights, **sandbox account only**. |
 | `account_profile` Lambda | Read one DynamoDB table, one action (`GetItem`); write its own logs |
 | `roi_estimator` Lambda | Write its own logs. Nothing else, because it calls no AWS service |
-| `kb_retrieve` Lambda *(planned)* | Query one knowledge base; write its own logs |
-| Knowledge Base service role *(planned)* | Read the docs bucket, call the embedding model, use the one index |
+| `kb_retrieve` Lambda | Query one knowledge base (`bedrock:Retrieve`); write its own logs |
+| Knowledge Base service role | Read the `docs/` files, call Titan Embeddings V2, use the one vector index (five S3 Vectors actions) |
 | Gateway role *(planned)* | Invoke exactly the three Lambdas |
 | Harness role *(planned)* | Call the one model, apply the one guardrail, use the one gateway, write logs |
 
@@ -297,6 +297,8 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 - **Synthetic data.** Five fictional companies; nothing is connected to a CRM or to real customers.
 - **The ROI model is deliberately simple.** No discounting, tax, risk adjustment or phased migration. Three of its five assumptions (right-sizing, migration effort, retained cost) are judgement calls that must be validated with a real customer.
 - **The grounding check is only partial.** Bedrock's grounding filter needs a tagged source and doesn't support conversational use, so it can't run automatically inside the agent. We run it after the answer instead.
+- **Retrieval is semantic only.** S3 Vectors has no keyword or hybrid search, so a literal term like "VMware" can lose to a document that is semantically closer to the question's intent (measured: the right document ranked #1 for four of five test questions and #4 for the fifth). Search also always returns its nearest neighbours: an off-topic question still scored 0.53 against 0.7 to 0.84 for relevant ones, so the relevance score has to be used.
+- **The knowledge base is small and hand-curated** (17 paraphrased summaries with a check date). It is a demo corpus, not a documentation mirror, and each summary should be re-checked against its source link before it is relied on.
 - **Off-topic blocking is a deny-list**, not an allow-list.
 - **Language models are not deterministic.** Two runs can differ; the evaluation measures pass rates rather than promising perfection.
 - **The budget warns, it doesn't stop.**
@@ -313,7 +315,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 |---|---|---|
 | 1 | Budget alarm, tooling, sign-in | **Done, LIVE** |
 | 2 | DynamoDB table, `account_profile` and `roi_estimator` Lambdas, tests, main Terraform stack | **Done, LIVE** (15 resources, deployed and smoke-tested 2026-10-07) |
-| 3 | Knowledge base: S3 docs bucket, S3 Vectors index, Titan embeddings, `kb_retrieve` | Planned |
+| 3 | Knowledge base: S3 docs bucket, S3 Vectors index, Titan embeddings, `kb_retrieve` | **Done, LIVE** (48 resources, 17 documents indexed, smoke-tested 2026-10-07) |
 | 4 | Guardrail, AgentCore gateway and harness, monitoring, command-line client | Planned |
 | 5 | Evaluation script (10+ prompts), Nova 2 Lite vs Haiku 4.5 | Planned |
 | 6 | README, 2-minute demo script, blog draft, one-page interview prep sheet | Planned |

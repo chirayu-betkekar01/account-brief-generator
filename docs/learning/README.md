@@ -25,12 +25,13 @@ Ask for **more depth** or **faster** at any point.
 | [../project-overview.md](../project-overview.md) | **Start here.** What we are building, why, the features, the architecture diagrams, safety, cost and limits | 30 min |
 | [phase-1-foundations.md](phase-1-foundations.md) | AWS accounts, IAM, Terraform basics, the budget alarm, why a budget is a warning not a brake | 45 min |
 | [phase-2-lambdas-and-data.md](phase-2-lambdas-and-data.md) | Lambda, DynamoDB, one IAM role per function, test-first development, the ROI model | 60 min |
+| [phase-3-knowledge-base.md](phase-3-knowledge-base.md) | Embeddings, vector search, RAG, S3 Vectors vs alternatives, the knowledge-base IAM role, and a real retrieval experiment | 60 min |
 | [exercises.md](exercises.md) | Every hands-on exercise (done and not yet done), with hints, model answers and review rubrics | varies |
 | [../../LEARNING_NOTES.md](../../LEARNING_NOTES.md) | Glossary, decision table (what we chose, what else we considered, what would change our mind), interview Q&A log | reference |
 | [../costs.md](../costs.md) | Verified prices and the cost model; a good case study in "how do I justify a number" | 20 min |
 | [../architecture.md](../architecture.md) | The architecture diagram and request flow | 15 min |
 
-Later phases add `phase-3-...` to `phase-6-...` here as they are built.
+Later phases add `phase-4-...` to `phase-6-...` here as they are built.
 
 ## Suggested study order
 
