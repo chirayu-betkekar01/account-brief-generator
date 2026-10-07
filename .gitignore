@@ -46,3 +46,6 @@ dist/
 .DS_Store
 Thumbs.db
 .claude/settings.local.json
+
+# Raw evaluation output (model answers); the committed summary lives in docs/
+evaluation/results/
