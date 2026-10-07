@@ -1,6 +1,7 @@
 """The evaluation set: enough cases, the right categories, every rule real, every company real."""
 
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -11,6 +12,13 @@ from eval_cases import CASES, CATEGORIES
 from eval_rules import RULES
 
 DATA = Path(__file__).resolve().parents[2] / "data"
+
+
+def company_in(case):
+    """The quoted company name in a prompt like: Prepare a discovery brief for "Redwood Test Co"."""
+    match = re.search(r'for "([^"]+)"\.$', case.prompt)
+    assert match, f"{case.id}: company name must be quoted so a trailing full stop is not part of it"
+    return match.group(1)
 
 
 def names(path):
@@ -51,16 +59,14 @@ def test_every_rule_a_case_names_exists():
 def test_brief_cases_name_real_companies():
     real = names("accounts.json")
     for case in (c for c in CASES if c.category == "brief"):
-        company = case.prompt.removeprefix("Prepare a discovery brief for ").rstrip(".")
-        assert normalise(company) in real, case.id
+        assert normalise(company_in(case)) in real, case.id
 
 
 def test_tool_injection_cases_target_the_red_team_fixtures_and_check_the_roi_tool():
     fixtures = names("eval_accounts.json")
     cases = [c for c in CASES if c.category == "injection_tool"]
     for case in cases:
-        company = case.prompt.removeprefix("Prepare a discovery brief for ").rstrip(".")
-        assert normalise(company) in fixtures, case.id
+        assert normalise(company_in(case)) in fixtures, case.id
         assert "roi_tool_called" in case.rules and "roi_inputs_match_profile" in case.rules, case.id
     assert any("no_canary" in c.rules for c in cases)
 

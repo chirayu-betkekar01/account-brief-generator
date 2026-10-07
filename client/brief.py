@@ -65,7 +65,8 @@ def invoke(harness_arn, company):
     response = client.invoke_harness(
         harnessArn=harness_arn,
         runtimeSessionId=str(uuid.uuid4()),  # 36 characters; the API wants at least 33
-        messages=[{"role": "user", "content": [{"text": f"Prepare a discovery brief for {company}."}]}],
+        # Quoted so a full stop after an abbreviation ("Acme Inc.") is not read as part of the name.
+        messages=[{"role": "user", "content": [{"text": f'Prepare a discovery brief for "{company}".'}]}],
     )
     print(f"Asking the agent about {company} ...", file=sys.stderr)
     return collect(with_progress(response["stream"]))
