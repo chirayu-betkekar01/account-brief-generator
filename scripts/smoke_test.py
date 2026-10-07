@@ -19,6 +19,16 @@ REGION = os.environ.get("AWS_REGION", "us-east-1")
 ACCOUNT_PROFILE_FN = f"{PROJECT}-account-profile"
 ROI_ESTIMATOR_FN = f"{PROJECT}-roi-estimator"
 
+KB_RETRIEVE_FN = f"{PROJECT}-kb-retrieve"
+# (question, title of the document that should be among the top three answers)
+KB_QUESTIONS = [
+    ("How should a hospital think about HIPAA when moving patient data to AWS?", "Using AWS for HIPAA workloads"),
+    ("What are the options for disaster recovery in the cloud?", "Disaster recovery strategies on AWS"),
+    ("Which storage class suits a huge media archive that is rarely read?", "Amazon S3 storage classes and lifecycle"),
+    ("Can we migrate our mainframe applications to AWS?", "Mainframe modernization on AWS: patterns and availability"),
+    ("How do we move a large VMware estate without rewriting applications?", "Amazon Elastic VMware Service (Amazon EVS)"),
+]
+
 ROI_EVENT = {
     "on_prem_annual_cost_usd": 3_900_000,
     "servers": 340,
@@ -69,6 +79,23 @@ def main():
 
     invalid = invoke(client, ROI_ESTIMATOR_FN, {**ROI_EVENT, "servers": 0})
     check("invalid input is a clean error naming the field", invalid.get("ok") is False and "servers" in invalid.get("error", ""), invalid)
+
+    print(f"kb_retrieve ({KB_RETRIEVE_FN})")
+    for question, expected_title in KB_QUESTIONS:
+        answer = invoke(client, KB_RETRIEVE_FN, {"query": question, "max_results": 3})
+        titles = [r.get("title") for r in answer.get("results", [])]
+        check(f"top-3 for '{question[:52]}' includes '{expected_title[:36]}'", expected_title in titles, titles)
+    sample = invoke(client, KB_RETRIEVE_FN, {"query": KB_QUESTIONS[0][0], "max_results": 1})
+    top = (sample.get("results") or [{}])[0]
+    check("passage carries a source link on an official AWS host", str(top.get("source_url", "")).startswith("https://") and "aws.amazon.com" in str(top.get("source_url")), top)
+    check("passage carries a relevance score", isinstance(top.get("score"), float), top)
+    serialised = json.dumps(sample)
+    check("no S3 locations or bucket names leak into the answer", "s3://" not in serialised and "kb-docs" not in serialised)
+    off_topic = invoke(client, KB_RETRIEVE_FN, {"query": "What is the best pizza topping?", "max_results": 1})
+    off_score = (off_topic.get("results") or [{"score": 0.0}])[0]["score"]
+    on_score = top.get("score", 0.0)
+    check(f"an off-topic question scores below an on-topic one ({off_score} < {on_score})", off_score < on_score)
+    check("empty query is rejected with an error", invoke(client, KB_RETRIEVE_FN, {"query": " "}).get("found") is False)
 
     failed = [name for name, ok in results if not ok]
     print(f"\n{len(results) - len(failed)}/{len(results)} checks passed")

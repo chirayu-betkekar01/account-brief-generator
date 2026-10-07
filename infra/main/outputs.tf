@@ -18,6 +18,26 @@ output "roi_estimator_function_name" {
   value       = module.roi_estimator.function_name
 }
 
+output "knowledge_base_id" {
+  description = "Bedrock knowledge base ID (used by scripts/kb_ingest.py)."
+  value       = module.knowledge_base.knowledge_base_id
+}
+
+output "data_source_id" {
+  description = "Knowledge base S3 data source ID (used by scripts/kb_ingest.py)."
+  value       = module.knowledge_base.data_source_id
+}
+
+output "kb_documents" {
+  description = "Number of documents uploaded to the knowledge base bucket."
+  value       = module.knowledge_base.document_count
+}
+
+output "kb_retrieve_function_name" {
+  description = "Deployed name of the kb_retrieve Lambda."
+  value       = module.kb_retrieve.function_name
+}
+
 output "budget_guard" {
   description = "The budget alarm that was confirmed to exist before anything was created."
   value       = data.aws_budgets_budget.guard.name

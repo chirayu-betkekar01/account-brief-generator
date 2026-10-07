@@ -46,6 +46,16 @@ module "storage_data" {
   depends_on = [terraform_data.budget_guard]
 }
 
+# --- Knowledge base (Phase 3) ------------------------------------------------------------------
+module "knowledge_base" {
+  source = "../modules/knowledge_base"
+
+  project  = var.project
+  docs_dir = "${local.data_dir}/kb_docs"
+
+  depends_on = [terraform_data.budget_guard]
+}
+
 # --- Action Lambdas ----------------------------------------------------------------------------
 module "account_profile" {
   source = "../modules/lambda_function"
@@ -68,6 +78,34 @@ module "account_profile" {
       sid       = "ReadOneAccountRow"
       actions   = ["dynamodb:GetItem"]
       resources = [module.storage_data.table_arn]
+    },
+  ]
+
+  depends_on = [terraform_data.budget_guard]
+}
+
+module "kb_retrieve" {
+  source = "../modules/lambda_function"
+
+  project            = var.project
+  function_name      = "kb-retrieve"
+  description        = "Searches the knowledge base and returns passages with their source links."
+  source_dir         = "${local.lambda_src}/kb_retrieve"
+  log_retention_days = var.log_retention_days
+  timeout_seconds    = 20 # the search embeds the question first, so allow a little longer than the other tools
+
+  environment = {
+    KNOWLEDGE_BASE_ID = module.knowledge_base.knowledge_base_id
+  }
+
+  policy_statements = [
+    {
+      # The handler makes exactly one AWS call, Retrieve. It may query this one knowledge base:
+      # not others, and it cannot change the documents, start ingestion or edit the index.
+      # (Bedrock uses the knowledge base's own service role for the embedding and vector lookups.)
+      sid       = "QueryOneKnowledgeBase"
+      actions   = ["bedrock:Retrieve"]
+      resources = [module.knowledge_base.knowledge_base_arn]
     },
   ]
 

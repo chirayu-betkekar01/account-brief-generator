@@ -16,7 +16,7 @@ MAIN := terraform -chdir=infra/main
 PY ?= python
 
 .PHONY: help bootstrap-init bootstrap-plan bootstrap-apply bootstrap-destroy \
-        init plan apply destroy destroy-all smoke test price-check fmt lint
+        init plan apply ingest destroy destroy-all smoke test price-check fmt lint
 
 help:
 	@echo Targets:
@@ -27,6 +27,7 @@ help:
 	@echo   init                terraform init for the main stack
 	@echo   plan                write and show the main-stack plan to infra/main/tfplan (read-only)
 	@echo   apply               apply exactly the saved plan from make plan
+	@echo   ingest              load the knowledge documents into the search index (after apply)
 	@echo   destroy             remove the whole main stack, keep the budget (asks for yes)
 	@echo   destroy-all         destroy, then remove the budget as well
 	@echo   smoke               invoke the deployed Lambdas and check their answers
@@ -61,6 +62,9 @@ destroy:
 	$(MAIN) destroy
 
 destroy-all: destroy bootstrap-destroy
+
+ingest:
+	$(PY) scripts/kb_ingest.py
 
 smoke:
 	$(PY) scripts/smoke_test.py
