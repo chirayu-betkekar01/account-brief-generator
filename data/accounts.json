@@ -1,0 +1,100 @@
+{
+  "note": "Synthetic data for a portfolio demo. Every company is fictional and no field holds personal data; any resemblance to a real organisation is coincidental.",
+  "accounts": [
+    {
+      "company_name": "Northwind Logistics",
+      "industry": "Logistics and freight",
+      "employees": 4200,
+      "headquarters": "Columbus, Ohio",
+      "servers": 340,
+      "storage_tb": 180,
+      "annual_infra_cost_usd": 3900000,
+      "annual_growth_pct": 12,
+      "current_environment": "Two colocated data centres running VMware, with nightly batch jobs for route planning.",
+      "workloads": ["Route optimisation batch", "Warehouse management system", "Customer tracking portal"],
+      "stated_pain_points": [
+        "Peak-season capacity has to be bought a year ahead",
+        "The data centre lease renews in 18 months",
+        "New tracking features take months to ship"
+      ],
+      "compliance": ["SOC 2"],
+      "cloud_maturity": "early"
+    },
+    {
+      "company_name": "Harborview Health",
+      "industry": "Regional healthcare network",
+      "employees": 6800,
+      "headquarters": "Tampa, Florida",
+      "servers": 520,
+      "storage_tb": 900,
+      "annual_infra_cost_usd": 7400000,
+      "annual_growth_pct": 18,
+      "current_environment": "One primary data centre plus a disaster recovery site, with a large on-premises imaging archive.",
+      "workloads": ["Imaging archive (PACS)", "Patient scheduling", "Analytics warehouse"],
+      "stated_pain_points": [
+        "Imaging storage grows faster than the budget",
+        "Disaster recovery tests take two days",
+        "Analytics queries slow down at month end"
+      ],
+      "compliance": ["HIPAA"],
+      "cloud_maturity": "mixed"
+    },
+    {
+      "company_name": "Summit Ridge Retail",
+      "industry": "Specialty retail",
+      "employees": 2900,
+      "headquarters": "Denver, Colorado",
+      "servers": 150,
+      "storage_tb": 60,
+      "annual_infra_cost_usd": 1800000,
+      "annual_growth_pct": 9,
+      "current_environment": "A hosted private cloud running a monolithic e-commerce platform.",
+      "workloads": ["E-commerce storefront", "Inventory sync", "Loyalty programme"],
+      "stated_pain_points": [
+        "Holiday traffic forces year-round over-provisioning",
+        "Releases take weeks",
+        "Inventory data arrives hours late"
+      ],
+      "compliance": ["PCI DSS"],
+      "cloud_maturity": "early"
+    },
+    {
+      "company_name": "Brightwave Media",
+      "industry": "Digital media and streaming",
+      "employees": 1100,
+      "headquarters": "Austin, Texas",
+      "servers": 90,
+      "storage_tb": 1400,
+      "annual_infra_cost_usd": 2600000,
+      "annual_growth_pct": 30,
+      "current_environment": "Colocated racks with a very large on-premises media archive.",
+      "workloads": ["Video transcoding", "Media archive", "Recommendation service"],
+      "stated_pain_points": [
+        "The transcoding queue backs up at launch events",
+        "Archive storage cost is rising 30 percent a year",
+        "Hard to experiment with machine learning"
+      ],
+      "compliance": [],
+      "cloud_maturity": "mixed"
+    },
+    {
+      "company_name": "Alder & Finch Insurance",
+      "industry": "Property and casualty insurance",
+      "employees": 3500,
+      "headquarters": "Hartford, Connecticut",
+      "servers": 410,
+      "storage_tb": 120,
+      "annual_infra_cost_usd": 5200000,
+      "annual_growth_pct": 6,
+      "current_environment": "A mainframe core policy system plus distributed claims applications.",
+      "workloads": ["Claims intake", "Policy administration", "Actuarial modelling"],
+      "stated_pain_points": [
+        "Mainframe skills are retiring",
+        "Claims turnaround is slower than competitors",
+        "Actuarial runs are limited by available capacity"
+      ],
+      "compliance": ["SOX", "State insurance regulations"],
+      "cloud_maturity": "none"
+    }
+  ]
+}
