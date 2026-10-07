@@ -10,6 +10,12 @@ variable "project" {
   default     = "discovery-brief-agent"
 }
 
+variable "alarm_email" {
+  description = "Optional address for CloudWatch alarm notifications. Leave empty for none. If set, put it in a git-ignored terraform.tfvars, never in the repo; AWS sends a confirmation email."
+  type        = string
+  default     = ""
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log retention for every Lambda."
   type        = number

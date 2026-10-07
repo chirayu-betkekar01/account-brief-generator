@@ -126,3 +126,55 @@ module "roi_estimator" {
 
   depends_on = [terraform_data.budget_guard]
 }
+
+# --- Guardrail (Phase 4) -----------------------------------------------------------------------
+module "guardrails" {
+  source = "../modules/guardrails"
+
+  project = var.project
+
+  depends_on = [terraform_data.budget_guard]
+}
+
+# --- The agent: gateway, tools and harness (Phase 4) -----------------------------------------------
+module "agent" {
+  source = "../modules/agent"
+
+  project = var.project
+
+  lambda_arns = {
+    profile = module.account_profile.function_arn
+    roi     = module.roi_estimator.function_arn
+    kb      = module.kb_retrieve.function_arn
+  }
+
+  guardrail_arn      = module.guardrails.guardrail_arn
+  guardrail_version  = module.guardrails.guardrail_version
+  system_prompt_file = "${path.root}/../../agent/system_prompt.md"
+
+  depends_on = [terraform_data.budget_guard]
+}
+
+# --- Monitoring (Phase 4) ----------------------------------------------------------------------------
+module "monitoring" {
+  source = "../modules/monitoring"
+
+  project = var.project
+  region  = var.region
+
+  lambda_log_groups = {
+    "account-profile" = module.account_profile.log_group_name
+    "kb-retrieve"     = module.kb_retrieve.log_group_name
+    "roi-estimator"   = module.roi_estimator.log_group_name
+  }
+
+  harness_runtime_id   = module.agent.harness_runtime_id
+  harness_runtime_name = module.agent.harness_runtime_name
+  harness_arn          = module.agent.harness_arn
+  gateway_tool_names   = module.agent.gateway_tool_names
+  guardrail_arn        = module.guardrails.guardrail_arn
+  guardrail_version    = module.guardrails.guardrail_version
+  model_id             = "us.amazon.nova-2-lite-v1:0"
+  log_retention_days   = var.log_retention_days
+  alarm_email          = var.alarm_email
+}

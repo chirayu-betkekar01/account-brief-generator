@@ -59,6 +59,20 @@ def test_services_the_passages_do_name_are_not_flagged():
     assert result(run_checks(answer, tools, GOOD_CALLS), "services_supported").passed
 
 
+def test_a_spelled_out_name_for_an_abbreviation_in_the_passage_is_flagged_in_full():
+    # Known, accepted false-positive class. The passages say "IAM permissions"; a model that writes
+    # "AWS Identity and Access Management" is flagged (the check compares words, not meanings),
+    # and the report must show the whole name, not a truncated "AWS Identity".
+    answer, tools = load("northwind")
+    answer = answer.replace(
+        "## 5.", "- Use AWS Identity and Access Management (IAM) for access [x](https://example.com).\n\n## 5.", 1
+    )
+    check = result(run_checks(answer, tools, GOOD_CALLS), "services_supported")
+    assert not check.passed
+    assert "AWS Identity and Access Management" in check.detail
+    assert "word for word" in check.detail
+
+
 def test_architecture_bullets_without_a_link_fail():
     answer, tools = load("harborview")
     check = result(run_checks(answer, tools, GOOD_CALLS), "architecture_bullets_cited")

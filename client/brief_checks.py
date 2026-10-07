@@ -17,7 +17,8 @@ EXPECTED_SECTIONS = [1, 2, 3, 4, 5, 6]
 MIN_QUESTIONS, MAX_QUESTIONS = 8, 10
 
 _HEADING = re.compile(r"^## (\d)\. ", re.M)
-_SERVICE_NAME = re.compile(r"\b(?:AWS|Amazon) [A-Z][A-Za-z0-9]+(?: [A-Z][A-Za-z0-9]+)?")
+# "AWS Foo", "Amazon Foo Bar", and names with a lowercase joiner such as "AWS Identity and Access Management".
+_SERVICE_NAME = re.compile(r"\b(?:AWS|Amazon) [A-Z][A-Za-z0-9]+(?: (?:and |for |of )?[A-Z][A-Za-z0-9]+){0,3}")
 _LINK_URL = re.compile(r"\]\((https?://[^)\s]+)\)")
 _NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
 
@@ -142,7 +143,9 @@ def run_checks(answer, tool_results, tool_calls=None):
             not invented,
             "every AWS service named appears in a retrieved passage"
             if not invented
-            else "not in any retrieved passage: " + ", ".join(invented),
+            # Conservative on purpose: a spelled-out name (AWS Identity and Access Management) for an
+            # abbreviation the passage uses (IAM) is flagged too. A false alarm beats a missed invention.
+            else "not found word for word in any retrieved passage: " + ", ".join(invented),
         )
     )
 
