@@ -16,26 +16,27 @@ MAIN := terraform -chdir=infra/main
 PY ?= python
 
 .PHONY: help bootstrap-init bootstrap-plan bootstrap-apply bootstrap-destroy \
-        init plan apply ingest destroy destroy-all smoke test price-check fmt lint
+        init plan apply ingest destroy destroy-all smoke brief test price-check fmt lint
 
 help:
-	@echo Targets:
-	@echo   bootstrap-init      terraform init for the budget stack
-	@echo   bootstrap-plan      show what the budget stack would create (free, read-only)
-	@echo   bootstrap-apply     create the budget alarm (shows the plan, asks for yes)
-	@echo   bootstrap-destroy   remove the budget alarm
-	@echo   init                terraform init for the main stack
-	@echo   plan                write and show the main-stack plan to infra/main/tfplan (read-only)
-	@echo   apply               apply exactly the saved plan from make plan
-	@echo   ingest              load the knowledge documents into the search index (after apply)
-	@echo   destroy             remove the whole main stack, keep the budget (asks for yes)
-	@echo   destroy-all         destroy, then remove the budget as well
-	@echo   smoke               invoke the deployed Lambdas and check their answers
-	@echo   test                run the unit tests (activate the .venv first, or pass PY=path)
-	@echo   price-check         verify unit prices against the AWS Price List API
-	@echo   fmt                 terraform fmt
-	@echo   lint                run the pre-commit checks on all files
-	@echo REMINDER: run make destroy when you pause, and check the AWS bill the next day.
+	@echo 'Targets:'
+	@echo '  bootstrap-init      terraform init for the budget stack'
+	@echo '  bootstrap-plan      show what the budget stack would create (free, read-only)'
+	@echo '  bootstrap-apply     create the budget alarm (shows the plan, asks for yes)'
+	@echo '  bootstrap-destroy   remove the budget alarm'
+	@echo '  init                terraform init for the main stack'
+	@echo '  plan                write and show the main-stack plan to infra/main/tfplan (read-only)'
+	@echo '  apply               apply exactly the saved plan from make plan'
+	@echo '  ingest              load the knowledge documents into the search index (after apply)'
+	@echo '  destroy             remove the whole main stack, keep the budget (asks for yes)'
+	@echo '  destroy-all         destroy, then remove the budget as well'
+	@echo '  smoke               invoke the deployed Lambdas and check their answers'
+	@echo '  brief               ask the agent for a brief: make brief COMPANY="Northwind Logistics"'
+	@echo '  test                run the unit tests (activate the .venv first, or pass PY=path)'
+	@echo '  price-check         verify unit prices against the AWS Price List API'
+	@echo '  fmt                 terraform fmt'
+	@echo '  lint                run the pre-commit checks on all files'
+	@echo 'REMINDER: run make destroy when you pause, and check the AWS bill the next day.'
 
 bootstrap-init:
 	$(BOOT) init
@@ -68,6 +69,9 @@ ingest:
 
 smoke:
 	$(PY) scripts/smoke_test.py
+
+brief:
+	$(PY) client/brief.py "$(COMPANY)" $(ARGS)
 
 test:
 	$(PY) -m pytest

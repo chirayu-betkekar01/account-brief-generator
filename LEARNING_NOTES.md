@@ -53,6 +53,22 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **S3 Vectors** | Vector storage inside S3: pay per use, no hourly floor, semantic search only. |
 | **Non-filterable metadata** | Metadata stored with a vector but not usable in filters. Bedrock needs its two bookkeeping keys marked this way. |
 | **Relevance score** | How close a passage is to the question (0 to 1 here). Search always returns something, so the score is how you tell relevant from irrelevant. |
+| **Agent vs workflow** | A workflow is steps you wrote; an agent is a loop where a model decides the next step. More flexible, less predictable, so it needs limits and checks. |
+| **AgentCore harness** | The managed agent loop: model, system prompt, tools and limits as configuration. Runs each session in an isolated micro virtual machine and streams events back. |
+| **AgentCore gateway** | A front door that publishes Lambdas (and APIs) as tools over MCP, with IAM sign-in. The model sees each tool as `target___tool`. |
+| **MCP (Model Context Protocol)** | A standard way for agents to discover and call tools, so tools are not tied to one agent framework. |
+| **Guardrail policies** | The checks inside a Bedrock guardrail. We use four: sensitive information (PII), denied topics, a prompt-attack content filter, and contextual grounding. |
+| **Denied topic** | A subject the guardrail refuses. It can only deny; it cannot say "allow only this". Detection is semantic and imperfect (it missed a pizza question). |
+| **Prompt attack filter** | A guardrail content filter for jailbreaks and "ignore your instructions" on what the user types. Input only. |
+| **Contextual grounding check** | Scores whether an answer is supported by a source. Needs the source and question tagged, so it runs via `ApplyGuardrail` after the answer. On our task it could not tell faithful from fabricated. |
+| **`ApplyGuardrail`** | Runs a guardrail on text you supply, without calling a model. Returns which policy matched which text, which is how we found the headquarters false positive. |
+| **Allow-list (`allowedTools`)** | Which tools the model is offered. Harness sessions include a bash shell and a file editor unless you restrict them. |
+| **Per-call override** | Anything the harness is configured with (model, system prompt, tools, guardrail) can be replaced by the caller in one request. IAM cannot stop it. |
+| **Confused deputy** | Tricking a service that has your permissions into acting for the wrong party. Defence: `aws:SourceAccount` and `aws:SourceArn` conditions in the trust policy. |
+| **Eventual consistency (IAM)** | A new role takes a second or two to be usable everywhere. "Not authorised" right after creating it usually means wait and retry. |
+| **Metric filter** | A rule that turns matching log lines into a CloudWatch metric (for example, every `ERROR` line becomes a 1). |
+| **Deterministic check** | Plain code comparing an answer with the tool results (links, service names, numbers). No AI, so no AI errors. |
+| **Tainted resource (Terraform)** | A resource marked for destroy and rebuild on the next apply, often after a half-failed apply. `terraform untaint` clears the mark without touching AWS. |
 
 *(More terms are added as each phase introduces them: Lambda, DynamoDB, embeddings, RAG, Guardrails, AgentCore, MCP, inference profile, ...)*
 
@@ -85,6 +101,14 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 21 | **Paraphrased, sourced, dated documents with metadata sidecars** | Copying AWS text verbatim; unsourced notes | Avoids misquoting and copyright issues, and every passage can be traced and re-checked. | A licensed documentation mirror. |
 | 22 | **Test what the agent receives (default 4 passages), not an arbitrary top-3** | Loosening the test silently | The right document ranked #4 for one question; the honest test is whether it is among the passages the agent reads. The finding is recorded, not hidden. | n/a |
 | 23 | **KB role scoped to the `docs/` prefix, one model, one index; no `ListFoundationModels`** | AWS's broader example policy | Least privilege: read-only on one prefix, five documented vector actions on one index. It worked first time without the extra list actions. | A failure traced to a missing permission. |
+| 24 | **AgentCore harness (configuration) for the agent loop** | AgentCore Runtime with our own code, Step Functions, Bedrock Agents Classic | Least code; managed loop, isolation and limits. Classic is closed to new accounts. | Needing custom control flow, multi-agent patterns or hooks the harness lacks. |
+| 25 | **`allowed_tools` leaves only the gateway; shell and file tools off** | Leave the defaults | A brief writer needs neither, and a shell is what a prompt-injection attack wants. Proven by A/B: default = no shell offered, override = `echo` ran. | A genuine need for code execution (then sandbox and scope it). |
+| 26 | **ADDRESS blocked in prompts, masked in answers** | Block both ways | The detector flagged a company's "City, State" headquarters; blocking a whole brief over a city name is the worse failure. | A false-positive rate measured near zero, or real personal addresses in the data. |
+| 27 | **Deterministic checks (links, service names, ROI figures) as the hallucination detector; grounding scores informational** | The guardrail's grounding filter | Measured: it scored a faithful section 0.17 and one with five invented services 0.05. The checks separated all four sample briefs. | A tuned grounding setup that separates cases on our data. |
+| 28 | **Numbered guardrail version, new one cut when the policy fingerprint changes** | Point the harness at DRAFT | An edit cannot silently change production behaviour. | n/a |
+| 29 | **Separate gateway and harness roles; confused-deputy conditions on the gateway role** | One shared role; unconditioned trust | Different jobs, different badges; only a gateway in this account named like ours can assume the gateway role. | n/a |
+| 30 | **Treat the guardrail as a default for honest callers, not a control; production needs a gate in front** | Claim the guardrail "enforces" safety | Measured: a per-call `model` override removed it; `allowedTools` can re-enable the shell. IAM does not inspect request bodies. | Building the gate (an API in front, or a harness lifecycle hook that denies overrides). |
+| 31 | **Service-name check compares words, so it can over-flag** | An alias table (IAM = Identity and Access Management) | A false alarm costs a glance; a missed invention costs credibility. Pinned by a test. Phase 5 measures the false-alarm rate. | A measured false-alarm rate high enough to hide the real findings. |
 
 ---
 
@@ -125,6 +149,19 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
   4. Source content must be checked against the live page: Mainframe Modernization is closed to new customers, which changes the advice.
   5. A Gateway connector's name ("Knowledge Bases") can hide a restriction ("Managed" only); read the fine print.
 
+### Phase 4: agent, guardrail and monitoring *(deployed 2026-10-07; full notes in `docs/learning/phase-4-agent.md`)*
+- Built and **applied** in two steps (12 + 12 resources, 87 in the main stack, $0 idle): guardrail and a numbered version, gateway role and gateway with three Lambda targets, harness role and harness, an unattached invoker policy, then monitoring (log retention, 6 metric filters, 4 alarms, a dashboard). The command-line client and its checks are committed (243 tests, six deliberate breaks all caught).
+- Verified: IAM read back from AWS matched the design; the live client ran a full brief (8 of 10 checks passed, both failures real); adversarial prompts were each stopped by at least one layer; an A/B test proved the tool allow-list removes the shell.
+- What went wrong, in order: IAM propagation (retry fixed it); a provider bug that tainted a working harness (declared the default, untainted, deleted nothing); the answer cut off at 1,000 tokens (per-call limit never set); the PII filter flagged a headquarters city; the model invented AWS services in 3 of 4 briefs; the grounding filter could not tell faithful from fabricated; a wrong claim of mine about `skip_destroy`.
+- Lessons banked:
+  1. Safety controls must be tested against your own realistic outputs: `ApplyGuardrail` tells you exactly what matched.
+  2. A small model follows formatting rules reliably and "don't invent" rules unreliably; prompts reduce the rate, detection is not optional.
+  3. Test any control against known-good and known-bad inputs before trusting it. The grounding filter failed that test.
+  4. A measurement that matches to two decimals after you changed something is a bug until proven otherwise (a patch silently did not apply).
+  5. Everything the harness is configured with can be overridden per call, and IAM cannot prevent it.
+  6. When Terraform and reality disagree, check the real resource first; prefer the fix that deletes nothing.
+  7. Verify a claim before saying it (`skip_destroy`), and correct it plainly when wrong.
+
 ---
 
 ## 4. Interview Q&A
@@ -144,6 +181,10 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 3 | When would you outgrow it? | *(model answer)* | | Hybrid search, richer metadata filtering than 35 keys, or low latency at high query rates; or when retrieval hit-rate plateaus. Keep chunking and the evaluation set constant to compare fairly. |
 | 3 | How do you keep RAG answers trustworthy? | *(model answer)* | | Curated, cited, dated sources; use the relevance score with a threshold; make 'not found' an explicit answer; evaluate with fixed questions and fabrication traps; add a post-answer grounding check. |
 | 3 | The model says something your documents do not support. What do you do? | *(model answer)* | | Decide whether retrieval missed or generation drifted by checking the passages returned; fix corpus/query or tighten instructions and add a grounding check; add the case to the evaluation set. |
+| 4 | Walk me through the architecture and where the security boundaries are. | *(model answer)* | | Client signs a request; harness runs the model in a loop with a guardrail on every call; tools only via an IAM-authenticated gateway to three Lambdas, each with its own role; harness role scoped to one model, one guardrail, one gateway; allow-list removes the default shell. Weak spot: callers can override guardrail and allow-list per request, so real customers need a gate in front. |
+| 4 | Guardrails are on. Are you safe from prompt injection? | *(model answer)* | | No. The prompt-attack filter screens only what the user types, not tool results; the corpus is small and curated; the prompt treats tool output as data; the model has three tools and no shell; hard caps; checks on the finished answer; and a caller can override the guardrail entirely. |
+| 4 | The model sometimes invents things. What do you do? | *(model answer)* | | Measure (3 of 4 briefs had invented services), tighten the prompt, test the platform's grounding filter (it could not separate cases), then use deterministic checks against the retrieved passages and tool results. Keep them blunt: false alarm beats a miss. Compare a stronger model with the same checks. |
+| 4 | A safety filter blocked your own legitimate output. How do you handle it? | *(model answer)* | | Find exactly what matched (`ApplyGuardrail` reports it), decide block vs degrade per control (ADDRESS: block in prompts, mask in answers), change the prompt to avoid the trigger, and test filters against realistic outputs before launch. |
 
 ---
 
@@ -153,4 +194,9 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 - Which AgentCore microVM generation (v1 or v2) does the harness bill at? *(measure in Phase 4)*
 - **Data provenance and ranges.** Should each ROI input carry a source label (customer-stated / benchmark / unknown) and should the tool return low/base/high cases, with the most sensitive assumption driving the first discovery question? *(proposed for Phase 4; add a provenance note to the overview limitations)*
 - Phase 1 leftovers: the IAM statement (E1) and Q2 remain open in `docs/learning/exercises.md`.
-- **Relevance threshold.** An off-topic question scored 0.534 and relevant ones 0.7 to 0.84. Where should the cutoff live (the Lambda, the agent's instructions, or both) and what value? About 0.6 on this corpus; re-measure after any corpus or model change. *(decide in Phase 4, measure in Phase 5)*
+- **Relevance threshold.** An off-topic question scored 0.534 and relevant ones 0.7 to 0.84. Where should the cutoff live (the Lambda, the agent's instructions, or both) and what value? About 0.6 on this corpus; re-measure after any corpus or model change. *(decided in Phase 4: 0.60 in the system prompt and in the client's link check; the model obeys it imperfectly; measure in Phase 5)*
+- **Closing the guardrail bypass.** Per-call overrides let a caller drop the guardrail or re-enable the shell. Would a harness `before_invocation` lifecycle hook (a Lambda that denies requests carrying overrides) fully close it, and what does it add in cost and latency? *(documented in the harness docs, not built; candidate for Phase 6 or "what I would do for production")*
+- **Denied-topic coverage.** The CLASSIC tier let "best pizza topping" through. Would the STANDARD tier (needs a cross-Region guardrail profile) catch it, and is the extra setup worth it? *(measure in Phase 5)*
+- **Does a stronger model obey "only name services you were given"?** Nova 2 Lite did not, reliably. *(Phase 5: Haiku 4.5 on the same checks)*
+- **Alias handling in the service-name check.** Exercise E8. How much does it reduce false alarms without letting a real invention through?
+- **Real cost per brief.** Model tokens measured at about $0.011; guardrail and runtime shares come from Cost Explorer. *(check 2026-10-08, then after the Phase 5 batch)*

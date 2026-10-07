@@ -105,6 +105,8 @@ one guardrail text unit per 1,000 characters, 60 s of runtime at 1 vCPU with 2 G
 Guardrail evaluation ($0.02-$0.03) costs as much as the Nova 2 Lite tokens themselves. That
 is a real design lesson: **safety controls are a first-class line item.**
 
+**Measured, 2026-10-07 (Phase 4):** one Northwind brief took five model calls, 21,950 input and 1,317 output tokens, so about $0.011 of Nova 2 Lite cost: half the $0.021 estimate, because the brief is about 1,300 tokens, not 4,000. The guardrail and runtime shares are not visible per call; they will be read from Cost Explorer after the Phase 5 batch.
+
 Projected spend by phase (Nova 2 Lite, conservative):
 
 | Phase | Activity | Estimate |
@@ -135,9 +137,12 @@ Projected spend by phase (Nova 2 Lite, conservative):
 | `make destroy` | Removes the whole main stack, keeps the budget | Added with the main stack |
 | `make destroy-all` | Removes the main stack, then the budget | Added with the main stack |
 
-After Phase 3, `make destroy` removes all 63 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
+After Phase 4, `make destroy` removes all 87 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
 roles, policies, log groups, budget guard; 48 from Phase 3: docs bucket and 34 files, vector bucket and index,
-knowledge base and data source, service role, `kb_retrieve`). All of them cost $0 while idle; the budget stays.
+knowledge base and data source, service role, `kb_retrieve`; 24 from Phase 4: guardrail and version, gateway and 3
+targets, harness, two roles and policies, invoker policy, harness log group, 6 metric filters, 4 alarms, 1 dashboard).
+All of them cost $0 while idle; the budget stays. Note that old guardrail versions are kept on purpose
+(`skip_destroy`), but they are deleted together with the guardrail itself on a full destroy.
 
 ## 7. Actual spend log
 
@@ -149,3 +154,4 @@ completed the next day.
 | 2026-10-05 | Account baseline before the project | n/a | about $0.105 for the month |
 | 2026-10-07 | Phase 2 applied: DynamoDB table (5 rows), 2 Lambdas, 2 log groups, IAM; about 12 smoke-test invocations | $0.00 | *check 2026-10-08* |
 | 2026-10-07 | Phase 3 applied: S3 docs bucket (34 files), S3 Vectors bucket and index, Bedrock knowledge base, `kb_retrieve`; one ingestion job (17 documents, about 4,000 tokens embedded); about 40 test searches | under $0.01 | *check 2026-10-08* |
+| 2026-10-07 | Phase 4 applied (24 resources): guardrail, AgentCore gateway + 3 targets, harness, roles, monitoring. Testing: about 9 full brief runs (several unguarded, one cut off at 1,000 tokens, one withheld by the guardrail), about 45 `ApplyGuardrail` calls, 7 adversarial prompts, 2 shell A/B runs | about $0.3-0.5 | *check 2026-10-08* |

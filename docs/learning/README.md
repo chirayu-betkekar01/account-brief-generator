@@ -26,18 +26,20 @@ Ask for **more depth** or **faster** at any point.
 | [phase-1-foundations.md](phase-1-foundations.md) | AWS accounts, IAM, Terraform basics, the budget alarm, why a budget is a warning not a brake | 45 min |
 | [phase-2-lambdas-and-data.md](phase-2-lambdas-and-data.md) | Lambda, DynamoDB, one IAM role per function, test-first development, the ROI model | 60 min |
 | [phase-3-knowledge-base.md](phase-3-knowledge-base.md) | Embeddings, vector search, RAG, S3 Vectors vs alternatives, the knowledge-base IAM role, and a real retrieval experiment | 60 min |
+| [phase-4-agent.md](phase-4-agent.md) | Agents vs workflows, AgentCore (harness, gateway), guardrail policies, confused deputy, deterministic checks, and nine things that went wrong with the evidence for each | 75 min |
 | [exercises.md](exercises.md) | Every hands-on exercise (done and not yet done), with hints, model answers and review rubrics | varies |
 | [../../LEARNING_NOTES.md](../../LEARNING_NOTES.md) | Glossary, decision table (what we chose, what else we considered, what would change our mind), interview Q&A log | reference |
 | [../costs.md](../costs.md) | Verified prices and the cost model; a good case study in "how do I justify a number" | 20 min |
 | [../architecture.md](../architecture.md) | The architecture diagram and request flow | 15 min |
 
-Later phases add `phase-4-...` to `phase-6-...` here as they are built.
+Later phases add `phase-5-...` and `phase-6-...` here as they are built.
 
 ## Suggested study order
 
 1. Read `phase-1-foundations.md`, then have Claude quiz you on it (the three interview questions).
 2. Do exercise **E1** (the IAM statement). It is short and teaches the single most-asked AWS concept.
 3. Read `phase-2-lambdas-and-data.md`, then do **E4** (read the code) and **E2** (the ROI function, test first).
+   Read `phase-4-agent.md` section 4 (what went wrong) before **E7** (the layers detective).
 4. Do **E3** (defend the assumptions out loud). This is the interview skill that matters most for a value engineer.
 5. Revisit the decision table in `LEARNING_NOTES.md` and try to argue *against* each decision.
 
