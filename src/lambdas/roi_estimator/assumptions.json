@@ -1,0 +1,29 @@
+{
+  "note": "Planning assumptions for the 3-year ROI model. Illustrative figures, not an AWS quote. Every entry needs a number, a unit, a rationale a skeptical CFO would accept, and a source.",
+  "assumptions": {
+    "aws_cost_per_server_year_usd": {
+      "value": null,
+      "unit": "TODO: what one 'server' on AWS means, per year",
+      "rationale": "TODO: why this is a fair yearly cost for one right-sized AWS instance (instance size, pricing model such as on-demand or a 1-year Savings Plan).",
+      "source": "TODO: where the number comes from (AWS Pricing Calculator, the Price List, a customer quote)."
+    },
+    "rightsizing_factor": {
+      "value": null,
+      "unit": "TODO: a fraction between 0 and 1",
+      "rationale": "TODO: why fewer AWS servers than on-prem servers is reasonable (on-prem fleets are often over-provisioned for peak). What would make it 1.0?",
+      "source": "TODO: where this comes from, or say it is an assumption to validate with the customer."
+    },
+    "aws_cost_per_tb_year_usd": {
+      "value": null,
+      "unit": "TODO: per TB of storage per year",
+      "rationale": "TODO: which storage mix this assumes (block, object, archive) and why a single blended figure is acceptable here.",
+      "source": "TODO: where the number comes from."
+    },
+    "migration_cost_per_server_usd": {
+      "value": null,
+      "unit": "TODO: one-off cost per server migrated",
+      "rationale": "TODO: what the cost covers (tooling, labour, dual running) and why it is charged once in year 1.",
+      "source": "TODO: where the number comes from."
+    }
+  }
+}
