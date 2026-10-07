@@ -13,6 +13,7 @@ REQUIRED = {
     "rightsizing_factor",
     "aws_cost_per_tb_year_usd",
     "migration_cost_per_server_usd",
+    "retained_cost_fraction",
 }
 
 
@@ -45,6 +46,10 @@ def test_each_assumption_is_explained_and_sourced(assumptions, name):
 
 def test_rightsizing_factor_is_a_fraction(assumptions):
     assert 0 < assumptions["rightsizing_factor"]["value"] <= 1
+
+
+def test_retained_cost_fraction_is_a_fraction_below_one(assumptions):
+    assert 0 < assumptions["retained_cost_fraction"]["value"] < 1
 
 
 def test_config_values_run_through_the_model(assumptions):

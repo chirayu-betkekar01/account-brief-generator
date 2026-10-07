@@ -4,6 +4,8 @@
 #   pip install -r requirements-dev.txt
 # Minimums are the versions this project was built and tested with (2026-10-05).
 boto3>=1.43
+# Lets boto3 read the short-lived credentials created by `aws login` (without it: MissingDependencyException).
+botocore[crt]>=1.43
 moto[dynamodb]>=5.2
 pre-commit>=4.6
 pytest>=9.1

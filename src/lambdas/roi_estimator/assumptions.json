@@ -1,29 +1,35 @@
 {
-  "note": "Planning assumptions for the 3-year ROI model. Illustrative figures, not an AWS quote. Every entry needs a number, a unit, a rationale a skeptical CFO would accept, and a source.",
+  "note": "Planning assumptions for the 3-year ROI model. Illustrative figures, not an AWS quote. Prices were read from the AWS Price List API on 2026-10-07; the other figures are judgement calls and say how to validate them.",
   "assumptions": {
     "aws_cost_per_server_year_usd": {
-      "value": null,
-      "unit": "TODO: what one 'server' on AWS means, per year",
-      "rationale": "TODO: why this is a fair yearly cost for one right-sized AWS instance (instance size, pricing model such as on-demand or a 1-year Savings Plan).",
-      "source": "TODO: where the number comes from (AWS Pricing Calculator, the Price List, a customer quote)."
+      "value": 1168,
+      "unit": "USD per AWS server-equivalent per year (one m7i.xlarge: 4 vCPU, 16 GiB)",
+      "rationale": "A typical on-prem server is modelled as one 4 vCPU / 16 GiB general-purpose instance, bought on a 1-year standard Reserved Instance with no upfront payment, which is how a steady production workload is usually purchased. On-demand would be $1,766 a year and would lower the ROI. Compute only: storage is priced separately, and support and data transfer sit in the retained-cost assumption.",
+      "source": "AWS Price List API, AmazonEC2, us-east-1, Linux, shared tenancy, m7i.xlarge: $0.13336 per hour reserved (1 year, standard, no upfront) x 8,760 hours; retrieved 2026-10-07."
     },
     "rightsizing_factor": {
-      "value": null,
-      "unit": "TODO: a fraction between 0 and 1",
-      "rationale": "TODO: why fewer AWS servers than on-prem servers is reasonable (on-prem fleets are often over-provisioned for peak). What would make it 1.0?",
-      "source": "TODO: where this comes from, or say it is an assumption to validate with the customer."
+      "value": 0.7,
+      "unit": "Fraction of the on-prem server count needed on AWS (0 to 1)",
+      "rationale": "Assumes AWS needs 70% as many servers as on-prem. On-prem fleets are usually sized for peak load plus headroom and run under-utilised, while AWS capacity can be matched to measured use and scaled. This is a judgement call, not a quote: 1.0 would mean no right-sizing benefit at all.",
+      "source": "Planning assumption (judgement). Validate with the customer's real CPU and memory utilisation data before presenting."
     },
     "aws_cost_per_tb_year_usd": {
-      "value": null,
-      "unit": "TODO: per TB of storage per year",
-      "rationale": "TODO: which storage mix this assumes (block, object, archive) and why a single blended figure is acceptable here.",
-      "source": "TODO: where the number comes from."
+      "value": 620,
+      "unit": "USD per TB of data stored per year (blended block and object storage)",
+      "rationale": "Assumes half the data sits on block storage (EBS gp3) and half in object storage (S3 Standard): ($960 + $276) / 2 = $618 per TB-year, rounded to $620. Data at rest only; requests, retrieval and snapshots are not modelled. Archive tiers would be cheaper for cold data such as a media archive.",
+      "source": "AWS Price List API, us-east-1: EBS gp3 $0.08 per GB-month; S3 Standard $0.023 per GB-month (first 50 TB tier); retrieved 2026-10-07."
     },
     "migration_cost_per_server_usd": {
-      "value": null,
-      "unit": "TODO: one-off cost per server migrated",
-      "rationale": "TODO: what the cost covers (tooling, labour, dual running) and why it is charged once in year 1.",
-      "source": "TODO: where the number comes from."
+      "value": 3500,
+      "unit": "USD one-off per server migrated",
+      "rationale": "One-off cost to assess, move, test and cut over each server: roughly 40 to 50 engineer-hours at about $75 an hour, plus migration tooling and a period of running both environments. Charged entirely in year 1. Depends heavily on how complicated the estate is.",
+      "source": "Planning assumption (judgement). Validate against a migration partner quote or an assessment of the customer's estate."
+    },
+    "retained_cost_fraction": {
+      "value": 0.4,
+      "unit": "Fraction of the current on-prem bill that remains after migration (0 to 1)",
+      "rationale": "Assumes 40% of today's all-in infrastructure bill does not disappear: the staff who still run and secure workloads, software licences, network links, and AWS-side costs the model does not itemise such as support and data transfer. Without this the model compares a full on-prem bill with bare AWS compute and overstates the savings.",
+      "source": "Planning assumption (judgement). Validate by splitting the customer's on-prem bill into hardware, facilities, staff, licences and network."
     }
   }
 }
