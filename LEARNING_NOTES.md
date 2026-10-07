@@ -29,6 +29,8 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **AWS Budgets** | Watches spending and e-mails you at thresholds. A smoke alarm, not a sprinkler: it warns, it does not stop spending. |
 | **Serverless / pay-per-use** | You pay only while something runs. Idle cost is about zero. |
 | **TCO** | Total cost of ownership: all costs of an option over its life, not just the sticker price. |
+| **IAM Action** | One specific operation a caller may ask AWS to perform, written `service:Operation` (e.g. `s3:GetObject`, `lambda:InvokeFunction`). Least privilege starts with listing only the actions needed. |
+| **IAM statement** | One permission sentence: Effect (Allow/Deny) + Actions + Resources. A policy is a list of statements. |
 
 *(More terms are added as each phase introduces them: Lambda, DynamoDB, embeddings, RAG, Guardrails, AgentCore, MCP, inference profile, ...)*
 
@@ -53,12 +55,12 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 
 ## 3. Phase log
 
-### Phase 1: budget alarm and foundations *(applied; exercise and interview Qs pending)*
+### Phase 1: budget alarm and foundations *(applied; IAM exercise and Q2 parked, revisit after Phase 2)*
 - Built and **applied**: one `aws_budgets_budget` ($25/month, 4 actual + 1 forecast alert, 1 e-mail subscriber). Cost: $0. Verified from AWS's side with `aws budgets describe-budget`, not just Terraform's own report.
 - Tooling: Terraform 1.16.4, GNU make 4.4.1, AWS CLI 2.37.9, Python venv with pytest/boto3/moto/pre-commit/streamlit.
 - Sign-in: IAM user + MFA, `aws login` (short-lived credentials, nothing long-lived on disk). Terraform picked the profile up via `AWS_PROFILE`; no workaround was needed.
 - Workflow learned: `plan -out=tfplan` saves exactly what you reviewed; `apply tfplan` then executes only that. The plan is a preview, never a file you edit.
-- **Your exercise:** IAM policy statement allowing a deployer to manage only this budget. *(pending)*
+- **Your exercise:** IAM policy statement allowing a deployer to manage only this budget. *(parked: you asked what an "Action" is; revisit with the Service Authorization Reference)*
 - Lessons banked:
   1. An unverified summary (the Budgets IAM action list) was wrong; the verified list came from AWS's own policy dataset. Verify, then trust.
   2. The `.example` template is tracked by git; real values belong in the git-ignored copy. A real e-mail was typed into the template and caught before it was committed.
@@ -73,7 +75,9 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 
 | Phase | Question | Your answer | Feedback | Stronger answer |
 |---|---|---|---|---|
-| | | | | |
+| 1 | A customer's finance lead is nervous about a surprise AWS bill. What do you put in place? | A budget limit that caps spend, plus alerts at several thresholds. | Alerts are right. **A budget does not cap spending**; it only warns. Know your own thresholds (20/50/80/100% actual + 100% forecast). | Be honest that a budget is a warning, then layer: tags + Cost Explorer + actual and forecast alerts to finance and engineering; Cost Anomaly Detection for spikes; hard limits (budget actions with a deny policy, limits on what can be created, app-level caps); pay-per-use design and a cost-per-request figure for forecasting. |
+| 1 | Why isn't a budget alert enough, and what would you add? | *(parked)* | | Alerts lag by hours (Budgets refreshes up to 3x/day) and do not stop anything. Add anomaly detection, budget actions, and caps inside the application. |
+| 1 | What does `terraform plan` guarantee, and what doesn't it? | A preview of what the infrastructure will look like once applied. | Right idea. Missing the "doesn't guarantee" half, which interviewers press on. It applies to any environment, not just production. | A saved plan (`-out`) makes apply execute exactly that diff. It does not guarantee success (permissions, quotas, name conflicts surface at create time), shows no cost, can't show "known after apply" values, and can't see anything outside state. |
 
 ---
 
