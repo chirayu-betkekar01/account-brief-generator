@@ -11,7 +11,7 @@ Read it top to bottom once; after that, use the headings as a reference.
 - **BUILT**: code written and tested on the laptop; waiting for the deploy approval.
 - **PLANNED**: designed, not yet built.
 
-*(Status as of 2026-10-07: the budget alarm is LIVE; the account lookup and ROI tools are BUILT; everything else is PLANNED.)*
+*(Status as of 2026-10-07: the budget alarm, the accounts table and the account lookup and ROI tools are LIVE and smoke-tested; everything else is PLANNED.)*
 
 ---
 
@@ -57,7 +57,7 @@ was considered, what it costs, how it is secured, and what would change the answ
 ## 3. What it produces: a worked example
 
 Asked about *Northwind Logistics* (fictional: 4,200 employees, 340 servers, 180 TB, $3.9M a year on infrastructure,
-12% annual growth), the **ROI tool** (already built and tested) returns, with today's assumptions:
+12% annual growth), the **ROI tool** (deployed and smoke-tested) returns, with today's assumptions:
 
 | | 3-year on-prem | 3-year AWS | Savings | ROI | Breakeven |
 |---|---|---|---|---|---|
@@ -76,8 +76,8 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 
 | Feature | What it does | Status |
 |---|---|---|
-| **Account profile lookup** | Finds a company by name (case and spacing tolerant) in a DynamoDB table; returns an explicit "not found" instead of inventing data | BUILT |
-| **3-year ROI / TCO estimator** | Pure-Python model comparing staying on-prem with moving to AWS; assumptions in a config file and shown in every answer | BUILT |
+| **Account profile lookup** | Finds a company by name (case and spacing tolerant) in a DynamoDB table; returns an explicit "not found" instead of inventing data | LIVE |
+| **3-year ROI / TCO estimator** | Pure-Python model comparing staying on-prem with moving to AWS; assumptions in a config file and shown in every answer | LIVE |
 | **Best-practice knowledge base** | Semantic search over short AWS-doc excerpts, returning passages with source links | PLANNED (Phase 3) |
 | **The agent** | A managed loop (Amazon Bedrock AgentCore) that reads your request, decides which tools to call, and assembles the brief | PLANNED (Phase 4) |
 | **Guardrails** | Blocks personal data (PII) in outputs and denies off-topic requests; a post-answer grounding check | PLANNED (Phase 4) |
@@ -85,8 +85,8 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 | **Cost controls** | $25 budget with 5 alerts; hard caps on agent steps, tokens and time | Budget LIVE; caps PLANNED |
 | **Evaluation script** | 10+ test prompts (PII-elicit, off-topic, fabrication-bait, prompt-injection) with pass/fail | PLANNED (Phase 5) |
 | **Clients** | A command-line client, optionally a Streamlit web page | PLANNED (Phase 4/6) |
-| **Infrastructure as code** | Terraform stacks and modules; `make plan / apply / destroy` | Budget stack LIVE; main stack BUILT |
-| **Unit tests** | 79 tests (moto fake AWS), plus a post-deploy smoke test | BUILT |
+| **Infrastructure as code** | Terraform stacks and modules; `make plan / apply / destroy` | Both stacks LIVE: the budget, and the accounts table plus two Lambdas |
+| **Unit tests** | 79 tests (moto fake AWS), plus a post-deploy smoke test (12 checks against the real functions) | BUILT and passing |
 
 ---
 
@@ -94,7 +94,7 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 
 ### 5.1 The picture
 
-Colour key: green = LIVE, blue = BUILT (awaiting deploy), grey = PLANNED.
+Colour key: green = LIVE (running in AWS now), grey = PLANNED.
 
 ```mermaid
 flowchart LR
@@ -146,8 +146,7 @@ flowchart LR
     classDef live fill:#d1fae5,stroke:#059669,color:#064e3b;
     classDef built fill:#dbeafe,stroke:#2563eb,color:#1e3a8a;
     classDef planned fill:#f3f4f6,stroke:#9ca3af,color:#374151;
-    class budget live;
-    class l1,l2,ddb,cfg built;
+    class budget,l1,l2,ddb,cfg live;
     class user,harness,gateway,guardrail,l3,kb,vec,docs,titan,cw planned;
 ```
 
@@ -313,7 +312,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 | Phase | Builds | Status |
 |---|---|---|
 | 1 | Budget alarm, tooling, sign-in | **Done, LIVE** |
-| 2 | DynamoDB table, `account_profile` and `roi_estimator` Lambdas, tests, main Terraform stack | Built and tested; plan reviewed; **awaiting deploy approval** |
+| 2 | DynamoDB table, `account_profile` and `roi_estimator` Lambdas, tests, main Terraform stack | **Done, LIVE** (15 resources, deployed and smoke-tested 2026-10-07) |
 | 3 | Knowledge base: S3 docs bucket, S3 Vectors index, Titan embeddings, `kb_retrieve` | Planned |
 | 4 | Guardrail, AgentCore gateway and harness, monitoring, command-line client | Planned |
 | 5 | Evaluation script (10+ prompts), Nova 2 Lite vs Haiku 4.5 | Planned |

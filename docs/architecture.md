@@ -78,8 +78,9 @@ Exact action names are verified against AWS docs at build time, not from memory.
 | Stack or module | Holds | Phase |
 |---|---|---|
 | `infra/bootstrap` + `modules/budget` | The cost alarm. Own state; survives `make destroy` | 1 (applied) |
-| `modules/storage_data` | DynamoDB table with seed data; S3 docs bucket | 2-3 |
-| `modules/lambdas` | 3 functions, 3 roles, log groups with retention | 2 |
+| `modules/storage_data` | DynamoDB table with seed data (applied); S3 docs bucket (Phase 3) | 2 (applied), 3 |
+| `modules/lambda_function` | Reusable unit: one function + its own role + log group with retention; called once per tool | 2 (applied for 2 of 3 tools) |
+| `infra/main` | The main stack that wires the modules together and refuses to plan without the budget | 2 (applied) |
 | `modules/knowledge_base` | S3 Vectors bucket + index, Knowledge Base, data source | 3 |
 | `modules/guardrails` | PII, denied topics, grounding filter | 4 |
 | `modules/agent` | Gateway, 3 targets, harness, roles | 4 |

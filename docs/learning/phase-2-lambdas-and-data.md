@@ -136,8 +136,32 @@ no emails, phone numbers or SSN-like strings, and I checked those patterns catch
 
 ---
 
-## 6. Deployment record
-*Filled in after `make apply`: plan summary (resources to create), idle cost, smoke-test result, anything unexpected.*
+## 6. Deployment record (2026-10-07)
+
+**What happened.** `make plan` produced **15 to add, 0 to change, 0 to destroy** (exactly the count predicted in exercise E5).
+After review and approval, `make apply` ran that saved plan: **15 added, 0 changed, 0 destroyed**, in about 20 seconds.
+
+**Checked from AWS's side, not just Terraform's:**
+- **Smoke test: 12/12 passed** against the real functions (`scripts/smoke_test.py`).
+- **IAM read-back matches the intent.** `account-profile` may only `logs:CreateLogStream` and `logs:PutLogEvents` on its own log group
+  and `dynamodb:GetItem` on the one table. `roi-estimator` may only write its own logs. Trust policy: only `lambda.amazonaws.com`.
+- **Function settings:** `python3.14`, `arm64`, 128 MB, 10 s timeout, JSON logging, `TABLE_NAME` set on `account-profile` only.
+- **Log retention:** 14 days on both groups.
+- **Data:** a direct count of the table returned 5 rows.
+- **Logs are structured:** each line carries `level`, `message` and `requestId`, which is what the Phase 4 metric filters will match on.
+
+**Cost:** idle $0.00 an hour. The smoke test made about 12 invocations, inside the free tier. Actual spend is checked in Cost Explorer
+the next day (it lags), and logged in [docs/costs.md](../costs.md).
+
+**What surprised us (each is a real-world lesson):**
+1. **The plan could not show the IAM policy JSON.** The policies contain ARNs that do not exist until apply, so they are "known after
+   apply". We reviewed the *intent* from the code and then verified the *result* with `aws iam get-role-policy`. A plan is a preview, not a proof.
+2. **Python's boto3 cannot read `aws login` credentials without `botocore[crt]`.** It fails with `MissingDependencyException`. This
+   would have broken the smoke test, the CLI client and the evaluation script; it is now in `requirements-dev.txt`.
+3. **DynamoDB's `ItemCount` said 0** right after seeding. AWS refreshes that figure roughly every six hours. The real count came from a scan.
+4. **Git Bash rewrites paths that start with `/`.** `aws logs ... /aws/lambda/...` failed until `MSYS_NO_PATHCONV=1` was set. It looks like an AWS
+   error but is a shell quirk.
+5. **Sessions expire.** `aws login` credentials lapsed overnight and had to be refreshed before the plan.
 
 ---
 

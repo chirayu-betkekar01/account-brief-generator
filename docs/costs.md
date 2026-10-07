@@ -135,4 +135,15 @@ Projected spend by phase (Nova 2 Lite, conservative):
 | `make destroy` | Removes the whole main stack, keeps the budget | Added with the main stack |
 | `make destroy-all` | Removes the main stack, then the budget | Added with the main stack |
 
-Nothing billable exists yet, so there is nothing to destroy after Phase 1.
+After Phase 2, `make destroy` removes the 15 Phase 2 resources (table, rows, 2 Lambdas, roles, policies, log groups,
+budget guard). All of them cost $0 while idle; the budget stays.
+
+## 7. Actual spend log
+
+Estimates are only useful if they are checked against the bill. Cost Explorer lags by up to a day, so each line is
+completed the next day.
+
+| Date | What changed | Expected | Actual (from Cost Explorer) |
+|---|---|---|---|
+| 2026-10-05 | Account baseline before the project | n/a | about $0.105 for the month |
+| 2026-10-07 | Phase 2 applied: DynamoDB table (5 rows), 2 Lambdas, 2 log groups, IAM; about 12 smoke-test invocations | $0.00 | *check 2026-10-08* |
