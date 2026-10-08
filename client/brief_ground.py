@@ -2,8 +2,8 @@
 
 The guardrail's grounding filter needs a tagged source, query and answer, which the harness cannot
 supply, so the client makes the call itself after the brief is written. Measured on 2026-10-07 it
-does not separate faithful sections from fabricated ones (a clean architecture section scored 0.17,
-one with five invented services 0.05), so the result is shown for information and never used to
+does not separate faithful sections from ungrounded ones (a clean architecture section scored 0.17,
+one with five ungrounded services 0.05), so the result is shown for information and never used to
 pass or fail a brief. The deterministic checks in brief_checks.py do that.
 """
 

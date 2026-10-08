@@ -4,8 +4,15 @@ locals {
   # The partition key is the lower-cased company name. This must match
   # normalise() in src/lambdas/account_profile/handler.py; a unit test
   # (test_key_matches_what_terraform_will_compute) fails if the data ever breaks that.
+  #
+  # An optional second file adds the red-team fixtures used by the Phase 5 evaluation (companies
+  # whose records contain planted instructions). Same schema, same table, so the real tools
+  # process them exactly as they process a real account.
   accounts = {
-    for account in jsondecode(file(var.accounts_file)).accounts :
+    for account in concat(
+      jsondecode(file(var.accounts_file)).accounts,
+      var.extra_accounts_file == null ? [] : jsondecode(file(var.extra_accounts_file)).accounts,
+    ) :
     lower(trimspace(account.company_name)) => account
   }
 }

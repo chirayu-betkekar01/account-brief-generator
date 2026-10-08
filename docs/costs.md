@@ -107,6 +107,8 @@ is a real design lesson: **safety controls are a first-class line item.**
 
 **Measured, 2026-10-07 (Phase 4):** one Northwind brief took five model calls, 21,950 input and 1,317 output tokens, so about $0.011 of Nova 2 Lite cost: half the $0.021 estimate, because the brief is about 1,300 tokens, not 4,000. The guardrail and runtime shares are not visible per call; they will be read from Cost Explorer after the Phase 5 batch.
 
+**Measured, Phase 5 baseline:** 63 runs of the 21-case set on Nova 2 Lite used 602,635 input and 30,137 output tokens, $0.282 of model cost, about $0.011 per brief run (model tokens only). The all-in estimate the runner uses ($0.05 per brief, $0.003 per refusal) is about 3 times the model-token figure to allow for the guardrail and runtime; the true ratio comes from Cost Explorer.
+
 Projected spend by phase (Nova 2 Lite, conservative):
 
 | Phase | Activity | Estimate |
@@ -155,3 +157,4 @@ completed the next day.
 | 2026-10-07 | Phase 2 applied: DynamoDB table (5 rows), 2 Lambdas, 2 log groups, IAM; about 12 smoke-test invocations | $0.00 | *check 2026-10-08* |
 | 2026-10-07 | Phase 3 applied: S3 docs bucket (34 files), S3 Vectors bucket and index, Bedrock knowledge base, `kb_retrieve`; one ingestion job (17 documents, about 4,000 tokens embedded); about 40 test searches | under $0.01 | *check 2026-10-08* |
 | 2026-10-07 | Phase 4 applied (24 resources): guardrail, AgentCore gateway + 3 targets, harness, roles, monitoring. Testing: about 9 full brief runs (several unguarded, one cut off at 1,000 tokens, one withheld by the guardrail), about 45 `ApplyGuardrail` calls, 7 adversarial prompts, 2 shell A/B runs | about $0.3-0.5 | *check 2026-10-08* |
+| 2026-10-07 | Phase 5: 2 DynamoDB items and 1 IAM statement applied ($0); about 250 evaluation runs (a 21-run pass, a 126-run batch of which the 63 Haiku runs failed before reaching the model, a 4-run re-check, a 63-run baseline) plus a few probes; model tokens about $0.67 | about $1.5-2.0 all-in | *check 2026-10-08* |

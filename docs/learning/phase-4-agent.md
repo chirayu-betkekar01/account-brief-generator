@@ -59,7 +59,7 @@ involved, so no AI errors. Analogy: **an auditor with a checklist, not a second 
 | How to run the agent | AgentCore **harness** (config, no code) | AgentCore Runtime with our own code (e.g. Strands), Step Functions, Bedrock Agents Classic | Least code, managed loop and isolation; Classic is closed | Needing custom control flow, multi-agent patterns, or hooks the harness lacks |
 | Tool front door | Gateway with Lambda targets | Harness calling an MCP URL directly; Lambdas called by custom code | Governed, IAM-authenticated, one place for policy and metrics | A tool that is already an MCP server |
 | Guardrail strategy | Bedrock Guardrails **plus** system prompt **plus** client checks | Prompt only; Guardrails only | Each layer misses things the others catch (section 4) | A layer measured as never firing |
-| Hallucination detection | **Deterministic** string checks | The guardrail's grounding filter | The filter could not tell faithful from fabricated (section 4) | A tuned filter that separates cases on our data |
+| Hallucination detection | **Deterministic** string checks | The guardrail's grounding filter | The filter could not tell faithful from ungrounded (section 4) | A tuned filter that separates cases on our data |
 | Topic tier | CLASSIC | STANDARD (needs a cross-Region profile) | English-only briefs; no extra setup or cross-Region data movement | The deny-list missing too many off-topic requests (it missed pizza) |
 | Guardrail version | Numbered snapshot | The editable DRAFT | An edit cannot silently change production behaviour | n/a |
 | Shell and file tools | **Off**, by allow-list | Leave the defaults | A brief writer needs neither; a shell is what an attacker wants | A genuine need for code execution |
@@ -131,7 +131,7 @@ on "Columbus, Ohio". Every company's headquarters is a "City, State" value, so n
 Fix: block ADDRESS in prompts, **mask** it in answers, and tell the agent not to mention headquarters. *Lesson: measure false
 positives on your own data before trusting a safety filter; and decide whether a filter should block or degrade gracefully.*
 
-**5. The model invented AWS services.** After two rounds of prompt tightening the format was perfect (nine questions, valid links,
+**5. The model named AWS services that no passage mentioned.** After two rounds of prompt tightening the format was perfect (nine questions, valid links,
 ROI figures copied exactly), but the model kept naming services that no retrieved passage mentioned:
 
 | Company | Services in section 4 not in any passage | Bullets with no link |
@@ -149,9 +149,9 @@ they do not set it to zero. Detection is not optional.*
 | Section 4 | Grounding score | Reality |
 |---|---|---|
 | Northwind | 0.17 | faithful |
-| Harborview | 0.18 | 1 invented service |
-| Alder | 0.08 | 1 invented service |
-| Summit | 0.05 | 5 invented services |
+| Harborview | 0.18 | 1 ungrounded service |
+| Alder | 0.08 | 1 ungrounded service |
+| Summit | 0.05 | 5 ungrounded services |
 
 Everything scored far below any usable threshold, and the faithful section scored the same as the unfaithful ones; even the ROI
 section, whose numbers were copied verbatim, scored about 0.57. The filter is designed for answering a question from a document,
@@ -227,9 +227,9 @@ snapshot per policy change; the guardrail as a default, not a control (and why).
 > no shell, on hard caps, and on checking the finished answer against the tool results. And a caller with invoke rights can override the
 > guardrail entirely, so it's a default for honest callers, not an enforcement point."
 
-**Q3. The model sometimes invents things. What do you do?**
-> "Measure first. I ran four companies and counted: one clean, three with invented AWS services, even after tightening the prompt twice. Then I
-> tried the platform's grounding filter and found it couldn't separate faithful from fabricated sections, so I stopped relying on it. What
+**Q3. The model sometimes states things its sources do not support. What do you do?**
+> "Measure first. I ran four companies and counted: one clean, three naming AWS services that no passage mentioned, even after tightening the prompt twice. Then I
+> tried the platform's grounding filter and found it couldn't separate faithful from ungrounded sections, so I stopped relying on it. What
 > worked was plain code: every link and every service name has to appear in a passage the knowledge base returned, and every figure in the
 > ROI section has to appear in the ROI tool's output. It's cheap, deterministic and it caught every case. I kept the checks deliberately blunt,
 > so they sometimes flag a harmless spelled-out name, because a false alarm costs a glance and a miss costs credibility. Next I'd compare a stronger

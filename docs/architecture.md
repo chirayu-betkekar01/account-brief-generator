@@ -88,7 +88,8 @@ Exact action names are verified against AWS docs at build time, not from memory.
 
 ## Known gaps and open items
 
-- **Grounding check: runs, but does not discriminate.** It cannot run inside the harness, so the client calls `ApplyGuardrail` afterwards. Measured, it scored a clean section 0.17 and one with five invented services 0.05. The client's deterministic checks (links, service names, ROI figures against the tool results) do the real work; grounding scores are informational.
+- **Grounding check: runs, but does not discriminate.** It cannot run inside the harness, so the client calls `ApplyGuardrail` afterwards. Measured, it scored a clean section 0.17 and one with five ungrounded services 0.05. The client's deterministic checks (links, service names, ROI figures against the tool results) do the real work; grounding scores are informational.
 - **Off-topic blocking is a deny-list.** Guardrails can block listed topics, not allow only one topic. The system prompt and the evaluation cover the rest.
 - **Resolved:** the harness stream does expose tool results (`toolResult` blocks, stop reason `tool_result`), which is what makes the client's checks possible.
+- **Instructions in data steer the agent (measured).** Two red-team records planted an instruction inside a profile field; the agent obeyed in 6 of 6 runs (sent `servers: 1` to the ROI tool; printed an attacker's marker). The guardrail does not scan tool results. The client compares the ROI tool's received inputs with the profile; prevention would make the ROI tool take only the company name (exercise E9).
 - **Per-call overrides.** Anyone allowed to call the harness can override the guardrail, model, system prompt and tool allow-list in the same request. The guardrail protects honest callers only; production needs a gate in front.

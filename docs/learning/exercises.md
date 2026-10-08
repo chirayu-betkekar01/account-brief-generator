@@ -230,9 +230,9 @@ the probe (must); notices the override gap (strong); proposes the gate or a life
 
 ---
 
-## E8. Improve the service-name check without letting inventions through (Phase 4, open)
+## E8. Improve the service-name check without letting ungrounded names through (Phase 4, open)
 
-**Goal:** Practise tuning a detector with tests on both sides: fewer false alarms *and* no missed inventions.
+**Goal:** Practise tuning a detector with tests on both sides: fewer false alarms *and* no missed ungrounded names.
 
 **Spec:** `client/brief_checks.py` flags "AWS Identity and Access Management" because the passages say "IAM". Add alias handling.
 Write the tests first: (1) a spelled-out name whose abbreviation appears in a retrieved passage now passes; (2) a name with no alias and no
@@ -250,7 +250,36 @@ alias entry is a hole in the net, so each needs a reason; and "IAM Identity Cent
 </details>
 
 **Review rubric:** tests first and on both sides (must); alias counts only when present in a passage (must); the Summit test still fails the
-invented services (must); reports before/after counts (strong); discusses the cost of each alias (bonus).
+ungrounded services (must); reports before/after counts (strong); discusses the cost of each alias (bonus).
+
+---
+
+## E9. Close the tool-result tampering hole by design (Phase 5, open)
+
+**Goal:** Turn a measured attack into a design fix: remove the model's ability to tamper, instead of asking it nicely not to.
+
+**Spec:** In the evaluation, a planted sentence in a profile made the agent call the ROI tool with `servers: 1` and `storage_tb: 1` (the profile said 410
+and 300), and the brief looked correct. Design the fix "pass identifiers, not data": the ROI tool takes only `company_name` and reads the four numbers
+from the table itself. Write down (1) the new tool input schema; (2) the change to the ROI Lambda and its IAM role, with every new permission justified;
+(3) what changes in the system prompt; (4) the tests you would write first (hint: moto, and a case where the model passes extra fields); (5) what
+the attack can still do afterwards, and which defence covers that.
+
+**Hints:** The ROI role currently has no permission except to write logs. A least-privilege `GetItem` on one table is the same statement the profile
+Lambda has. The canary half of the attack (attacker-chosen text in the answer) is unaffected, because the model still reads the profile.
+
+<details><summary>Model answer</summary>
+
+(1) `{company_name: string}` only. (2) Handler: look up the key with `normalise(company_name)`, read `annual_infra_cost_usd`, `servers`, `storage_tb`,
+`annual_growth_pct`, call `compute_roi`; return an explicit not-found. IAM: `dynamodb:GetItem` on the one accounts table, nothing else. Environment: `TABLE_NAME`.
+(3) Step 3 becomes "call `roi___estimate_roi` with the company name only". (4) Tests: found company gives the same numbers as today; unknown company returns a
+clear error; extra fields in the event are ignored; numbers cannot be overridden through the event. (5) Still possible: text injected into the answer (the canary),
+and misleading free-text fields. Cover with output checks (a client check that flags text lifted from an instruction-like tool-result sentence), a human reading the
+brief, and, where it matters, sanitising or labelling untrusted fields before the model sees them. The change also shows the trade-off: the ROI Lambda stops being
+a pure function with no AWS access, so a stricter role review is needed.
+</details>
+
+**Review rubric:** removes the model from the data path (must); least-privilege IAM with one action on one table (must); tests first, including "cannot be overridden" (must);
+says what remains exposed (strong); notes the cost of widening the ROI role (bonus).
 
 ---
 
@@ -283,7 +312,8 @@ it did not get from the ROI tool; refuses off-topic and PII requests politely; t
 instructions (prompt-injection resistance). *Rubric:* structure (must); no-fabrication rule (must); injection
 awareness (strong); length and clarity (good).
 
-### P5. Write four evaluation prompts (Phase 5)
+### P5. Write four evaluation prompts (Phase 5, build done; practise by redoing it)
+The 21 cases were written during the build (see `evaluation/eval_cases.py`); write yours *before* reading them, then compare.
 Write four test prompts with expected behaviour: one PII-elicit, one off-topic, one fabrication-bait, one
 prompt-injection. *Rubric:* each has a clear pass/fail rule that a script can check; at least one attacks the
 tool results rather than the user message.
@@ -297,3 +327,6 @@ reliably once stated precisely and with an exact count; "do not invent" rules we
 passages never mentioned). Positive phrasing ("use only services a passage names"), a mandatory-link rule per bullet and a
 self-check step each helped a little. So the rubric's real test is not "does the prompt forbid fabrication" but "does your design
 *detect* it when the prompt fails": see the client's checks.
+**What the live evaluation taught about this exercise:** the interesting prompts are the ones that avoid the guardrail's obvious triggers ("include the CEO's name"
+is blocked before the model runs and so cannot test the model), and the attack that mattered was not typed at all: it sat inside a database record. Also: write the
+rule so that a script can decide, and check by reading one transcript that a failing case failed for the reason you think.

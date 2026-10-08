@@ -216,6 +216,23 @@ data "aws_iam_policy_document" "harness_permissions" {
     )
   }
 
+  # The model(s) used only to COMPARE answers in the evaluation: the same two kinds of ARN for each
+  # extra profile. Remove the id from comparison_model_ids and this statement disappears.
+  dynamic "statement" {
+    for_each = length(var.comparison_model_ids) > 0 ? [1] : []
+
+    content {
+      sid     = "CallComparisonModelsForEvaluation"
+      actions = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
+      resources = flatten([
+        for id in var.comparison_model_ids : concat(
+          ["arn:aws:bedrock:${local.region}:${local.account_id}:inference-profile/${id}"],
+          [for r in var.model_profile_regions : "arn:aws:bedrock:${r}::foundation-model/${trimprefix(id, "us.")}"],
+        )
+      ])
+    }
+  }
+
   # The guardrail is applied to every model call, which requires this action on that guardrail.
   statement {
     sid       = "ApplyTheOneGuardrail"

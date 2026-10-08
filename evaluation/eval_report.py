@@ -15,6 +15,8 @@ class RunResult:
     passed: bool
     rules: list  # [(rule name, passed, detail)]
     checks: dict = field(default_factory=dict)  # brief check name -> passed (brief runs only)
+    check_details: dict = field(default_factory=dict)  # brief check name -> its detail text (brief runs only)
+    tool_results: list = field(default_factory=list)  # what the tools returned, so a run can be re-checked later
     guardrail_blocked: bool = False
     input_tokens: int = 0
     output_tokens: int = 0
@@ -50,6 +52,18 @@ def per_check_rates(results):
             cell[0] += 1 if ok else 0
             cell[1] += 1
     return {m: {n: tuple(c) for n, c in checks.items()} for m, checks in counts.items()}
+
+
+def flagged_services(results):
+    """{model: {service name: times flagged}} from the services_supported check of brief runs."""
+    prefix = "not found word for word in any retrieved passage: "
+    counts = defaultdict(lambda: defaultdict(int))
+    for r in results:
+        detail = r.check_details.get("services_supported", "")
+        if r.category == "brief" and detail.startswith(prefix):
+            for name in detail[len(prefix):].split(", "):
+                counts[r.model][name] += 1
+    return {m: dict(sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))) for m, c in counts.items()}
 
 
 def layer_breakdown(results):
@@ -102,6 +116,15 @@ def render_markdown(results, prices, title, generated):
         for name in names:
             cells = [_fmt(rates[m][name]) if m in rates and name in rates[m] else "-" for m in models]
             lines.append(f"| {name} | " + " | ".join(cells) + " |")
+        lines.append("")
+
+    flagged = flagged_services(results)
+    if flagged:
+        lines += ["## AWS service names flagged as not in any retrieved passage", "",
+                  "Genuinely ungrounded names and spelled-out names for abbreviations look the same to the check; read the list.", ""]
+        for model in models:
+            if model in flagged:
+                lines.append(f"- **{model}**: " + ", ".join(f"{n} x{c}" for n, c in flagged[model].items()))
         lines.append("")
 
     failures = [r for r in results if not r.passed]

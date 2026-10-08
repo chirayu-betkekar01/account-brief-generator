@@ -1,7 +1,7 @@
 """Deterministic checks on a finished brief, using only the tool results the agent was given.
 
 Why these exist: the guardrail's contextual grounding check could not tell a faithful brief from one
-with invented AWS services (scores 0.17 against 0.05, both far below any usable threshold), and the
+with ungrounded AWS services, ones no retrieved passage mentions (scores 0.17 against 0.05, both far below any usable threshold), and the
 model followed "name only services you were given" in some briefs and not in others. A plain string
 comparison against the retrieved passages caught every case in the sample. These checks run in the
 client and in the evaluation script; they report, they do not rewrite the answer.

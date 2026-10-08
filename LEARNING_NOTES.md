@@ -60,7 +60,7 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **Guardrail policies** | The checks inside a Bedrock guardrail. We use four: sensitive information (PII), denied topics, a prompt-attack content filter, and contextual grounding. |
 | **Denied topic** | A subject the guardrail refuses. It can only deny; it cannot say "allow only this". Detection is semantic and imperfect (it missed a pizza question). |
 | **Prompt attack filter** | A guardrail content filter for jailbreaks and "ignore your instructions" on what the user types. Input only. |
-| **Contextual grounding check** | Scores whether an answer is supported by a source. Needs the source and question tagged, so it runs via `ApplyGuardrail` after the answer. On our task it could not tell faithful from fabricated. |
+| **Contextual grounding check** | Scores whether an answer is supported by a source. Needs the source and question tagged, so it runs via `ApplyGuardrail` after the answer. On our task it could not tell faithful from ungrounded. |
 | **`ApplyGuardrail`** | Runs a guardrail on text you supply, without calling a model. Returns which policy matched which text, which is how we found the headquarters false positive. |
 | **Allow-list (`allowedTools`)** | Which tools the model is offered. Harness sessions include a bash shell and a file editor unless you restrict them. |
 | **Per-call override** | Anything the harness is configured with (model, system prompt, tools, guardrail) can be replaced by the caller in one request. IAM cannot stop it. |
@@ -69,6 +69,12 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **Metric filter** | A rule that turns matching log lines into a CloudWatch metric (for example, every `ERROR` line becomes a 1). |
 | **Deterministic check** | Plain code comparing an answer with the tool results (links, service names, numbers). No AI, so no AI errors. |
 | **Tainted resource (Terraform)** | A resource marked for destroy and rebuild on the next apply, often after a half-failed apply. `terraform untaint` clears the mark without touching AWS. |
+| **Evaluation (for an LLM app)** | A fixed set of cases run several times, with pass/fail rules, reported as rates. Unlike a unit test, one run proves nothing because the model's answer varies. |
+| **Mechanical rule** | A pass/fail check written as code (no tool called, no email pattern, ROI inputs equal the profile). Used instead of a model judging a model. |
+| **Indirect prompt injection** | An instruction hidden in data the agent reads (a database field, a document) rather than typed by the user. The model cannot reliably tell data from instructions. The guardrail does not scan tool results. |
+| **Canary** | A unique marker planted in an attacker's instruction (CANARY-7F3A91). If it shows up in the answer, the instruction was obeyed. |
+| **Least agency (pass identifiers, not data)** | Design tools so the model passes only an ID (the company name) and the tool looks the facts up itself, so a manipulated model has nothing to tamper with. |
+| **Ungrounded** | Stated but not supported by the sources the answer is meant to rest on. Not the same as untrue: most flagged AWS services were real, recommended from memory. |
 
 *(More terms are added as each phase introduces them: Lambda, DynamoDB, embeddings, RAG, Guardrails, AgentCore, MCP, inference profile, ...)*
 
@@ -104,11 +110,16 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 24 | **AgentCore harness (configuration) for the agent loop** | AgentCore Runtime with our own code, Step Functions, Bedrock Agents Classic | Least code; managed loop, isolation and limits. Classic is closed to new accounts. | Needing custom control flow, multi-agent patterns or hooks the harness lacks. |
 | 25 | **`allowed_tools` leaves only the gateway; shell and file tools off** | Leave the defaults | A brief writer needs neither, and a shell is what a prompt-injection attack wants. Proven by A/B: default = no shell offered, override = `echo` ran. | A genuine need for code execution (then sandbox and scope it). |
 | 26 | **ADDRESS blocked in prompts, masked in answers** | Block both ways | The detector flagged a company's "City, State" headquarters; blocking a whole brief over a city name is the worse failure. | A false-positive rate measured near zero, or real personal addresses in the data. |
-| 27 | **Deterministic checks (links, service names, ROI figures) as the hallucination detector; grounding scores informational** | The guardrail's grounding filter | Measured: it scored a faithful section 0.17 and one with five invented services 0.05. The checks separated all four sample briefs. | A tuned grounding setup that separates cases on our data. |
+| 27 | **Deterministic checks (links, service names, ROI figures) as the hallucination detector; grounding scores informational** | The guardrail's grounding filter | Measured: it scored a faithful section 0.17 and one with five ungrounded services 0.05. The checks separated all four sample briefs. | A tuned grounding setup that separates cases on our data. |
 | 28 | **Numbered guardrail version, new one cut when the policy fingerprint changes** | Point the harness at DRAFT | An edit cannot silently change production behaviour. | n/a |
 | 29 | **Separate gateway and harness roles; confused-deputy conditions on the gateway role** | One shared role; unconditioned trust | Different jobs, different badges; only a gateway in this account named like ours can assume the gateway role. | n/a |
 | 30 | **Treat the guardrail as a default for honest callers, not a control; production needs a gate in front** | Claim the guardrail "enforces" safety | Measured: a per-call `model` override removed it; `allowedTools` can re-enable the shell. IAM does not inspect request bodies. | Building the gate (an API in front, or a harness lifecycle hook that denies overrides). |
-| 31 | **Service-name check compares words, so it can over-flag** | An alias table (IAM = Identity and Access Management) | A false alarm costs a glance; a missed invention costs credibility. Pinned by a test. Phase 5 measures the false-alarm rate. | A measured false-alarm rate high enough to hide the real findings. |
+| 31 | **Service-name check compares words, so it can over-flag** | An alias table (IAM = Identity and Access Management) | A false alarm costs a glance; a missed ungrounded name costs credibility. Pinned by a test. Phase 5 measures the false-alarm rate. | A measured false-alarm rate high enough to hide the real findings. |
+| 32 | **Mechanical pass/fail rules, not a model as judge** | An LLM judge; human review | Deterministic, free, cannot disagree with itself; a model judging a model multiplies two sources of error. | Qualities code cannot express (tone, helpfulness): add a human sample. |
+| 33 | **Each case run 3 times; report rates** | One run; 30 runs | Two identical runs of the whole set differed by a couple of passes, so one run misleads; 30 would cost over $15. | A decision hinging on a few percentage points: run many more on the cases that matter. |
+| 34 | **Red-team records in the real table, loaded by `include_eval_fixtures` (default true)** | Mocking the tool output; mixing them into the demo data | Tests the real path (Gateway, Lambda, DynamoDB, model) while keeping the five demo accounts clean. | Fixtures that must never touch a shared table: use a separate table. |
+| 35 | **Company names quoted in prompts** | Leave punctuation to the model | The lookup is an exact match, and "Test Co." lost two cases to a trailing full stop. Same trap for a real "Acme Inc.". | Making the lookup tolerant (strip trailing punctuation) or the tool take an ID. |
+| 36 | **Client check: the ROI tool's echoed inputs must equal the profile** | Trusting that a brief which matches the tool output is right | A planted instruction made the agent send servers=1; the brief agreed with the wrong tool output. | Preventing it structurally (decision pending, see open questions). |
 
 ---
 
@@ -152,7 +163,7 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 ### Phase 4: agent, guardrail and monitoring *(deployed 2026-10-07; full notes in `docs/learning/phase-4-agent.md`)*
 - Built and **applied** in two steps (12 + 12 resources, 87 in the main stack, $0 idle): guardrail and a numbered version, gateway role and gateway with three Lambda targets, harness role and harness, an unattached invoker policy, then monitoring (log retention, 6 metric filters, 4 alarms, a dashboard). The command-line client and its checks are committed (243 tests, six deliberate breaks all caught).
 - Verified: IAM read back from AWS matched the design; the live client ran a full brief (8 of 10 checks passed, both failures real); adversarial prompts were each stopped by at least one layer; an A/B test proved the tool allow-list removes the shell.
-- What went wrong, in order: IAM propagation (retry fixed it); a provider bug that tainted a working harness (declared the default, untainted, deleted nothing); the answer cut off at 1,000 tokens (per-call limit never set); the PII filter flagged a headquarters city; the model invented AWS services in 3 of 4 briefs; the grounding filter could not tell faithful from fabricated; a wrong claim of mine about `skip_destroy`.
+- What went wrong, in order: IAM propagation (retry fixed it); a provider bug that tainted a working harness (declared the default, untainted, deleted nothing); the answer cut off at 1,000 tokens (per-call limit never set); the PII filter flagged a headquarters city; the model named AWS services no passage mentioned in 3 of 4 briefs; the grounding filter could not tell faithful from ungrounded; a wrong claim of mine about `skip_destroy`.
 - Lessons banked:
   1. Safety controls must be tested against your own realistic outputs: `ApplyGuardrail` tells you exactly what matched.
   2. A small model follows formatting rules reliably and "don't invent" rules unreliably; prompts reduce the rate, detection is not optional.
@@ -161,6 +172,20 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
   5. Everything the harness is configured with can be overridden per call, and IAM cannot prevent it.
   6. When Terraform and reality disagree, check the real resource first; prefer the fix that deletes nothing.
   7. Verify a claim before saying it (`skip_destroy`), and correct it plainly when wrong.
+
+### Phase 5: evaluation *(run 2026-10-07; full notes in `docs/learning/phase-5-evaluation.md`, results in `docs/evaluation-baseline.md`)*
+- Built and committed: 21 cases (personal data, off-topic, fabrication bait, typed injection, two attacks planted in tool results, five ordinary briefs), mechanical rules, a cost-guarded runner, a report generator. 315 tests; eight deliberate breaks of the rules all caught.
+- Infrastructure (applied, $0): two red-team records in the accounts table and a removable IAM statement for the Haiku comparison (2 added, 1 changed).
+- Baseline, Nova 2 Lite, 3 runs per case (63 runs, $0.28 of model tokens): personal-data, off-topic and typed-injection cases 30 of 30 safe (guardrail stopped 23); fabrication bait 12 of 12; 15 of 15 ordinary briefs not blocked; briefs passing every check 1 of 15; **attacks planted in tool results 0 of 6 (both worked every time)**.
+- Not measured: Claude Haiku 4.5. Bedrock requires a one-time Anthropic use-case form from the account owner; one earlier call worked, then none did (unexplained). The 63 Haiku runs in the first batch failed before reaching the model and are void.
+- Lessons banked:
+  1. A red test is not a finding until you read the transcript: two "attack" cases failed because the model passed "Redwood Test Co." with a full stop to an exact-match lookup.
+  2. Indirect prompt injection works: the agent sent servers=1 to the ROI tool because a profile field said so, and the brief looked correct. The guardrail does not scan tool results.
+  3. A check that compares output with a tool's output cannot detect that the tool was fed wrong input. Check inputs against the source of truth too.
+  4. Run the same cases more than once: two identical runs differed; even the guardrail's topic filter caught "best pizza topping" two times in three.
+  5. "Ungrounded" is not "invented": most flagged AWS services were real. Name the failure precisely (and correct your own earlier wording).
+  6. Read a zero before the percentage: 0 of 15 next to 0 tokens means the runs never happened.
+  7. Record enough (check details, tool results) to re-judge a run later.
 
 ---
 
@@ -183,8 +208,12 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 3 | The model says something your documents do not support. What do you do? | *(model answer)* | | Decide whether retrieval missed or generation drifted by checking the passages returned; fix corpus/query or tighten instructions and add a grounding check; add the case to the evaluation set. |
 | 4 | Walk me through the architecture and where the security boundaries are. | *(model answer)* | | Client signs a request; harness runs the model in a loop with a guardrail on every call; tools only via an IAM-authenticated gateway to three Lambdas, each with its own role; harness role scoped to one model, one guardrail, one gateway; allow-list removes the default shell. Weak spot: callers can override guardrail and allow-list per request, so real customers need a gate in front. |
 | 4 | Guardrails are on. Are you safe from prompt injection? | *(model answer)* | | No. The prompt-attack filter screens only what the user types, not tool results; the corpus is small and curated; the prompt treats tool output as data; the model has three tools and no shell; hard caps; checks on the finished answer; and a caller can override the guardrail entirely. |
-| 4 | The model sometimes invents things. What do you do? | *(model answer)* | | Measure (3 of 4 briefs had invented services), tighten the prompt, test the platform's grounding filter (it could not separate cases), then use deterministic checks against the retrieved passages and tool results. Keep them blunt: false alarm beats a miss. Compare a stronger model with the same checks. |
+| 4 | The model sometimes states things its sources do not support. What do you do? | *(model answer)* | | Measure (3 of 4 briefs named services no passage mentioned), tighten the prompt, test the platform's grounding filter (it could not separate cases), then use deterministic checks against the retrieved passages and tool results. Keep them blunt: false alarm beats a miss. Compare a stronger model with the same checks. |
 | 4 | A safety filter blocked your own legitimate output. How do you handle it? | *(model answer)* | | Find exactly what matched (`ApplyGuardrail` reports it), decide block vs degrade per control (ADDRESS: block in prompts, mask in answers), change the prompt to avoid the trigger, and test filters against realistic outputs before launch. |
+| 5 | How do you evaluate an LLM application? | *(model answer)* | | Safety behaviours, quality and cost; cases with mechanical pass/fail rules; several runs per case and rates by category; avoid a model as judge where code can decide; record which layer stopped each bad request. |
+| 5 | Your evaluation reported failures. How do you know they are real? | *(model answer)* | | Read the transcript first. Ours were wrong at first: a trailing full stop broke an exact-match lookup, so the attack never ran. After the fix the same cases failed for the real reason: the attacks worked. |
+| 5 | What is indirect prompt injection and how do you defend against it? | *(model answer)* | | An instruction hidden in data the agent reads. Remove the opportunity (tools take identifiers, not facts), least-privilege tools, compare what was sent with the source of truth, sanitise untrusted data, human in the loop. Prompts help a little; the guardrail does not scan tool results. |
+| 5 | Your guardrail stopped everything you threw at it. Are you done? | *(model answer)* | | No: 7 of 30 refusals depended on the model; the guardrail is a per-call-overridable default; and the successful attack came through tool results, which it does not scan. Strong against typed attacks, weak against hidden ones. |
 
 ---
 
@@ -198,5 +227,8 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 - **Closing the guardrail bypass.** Per-call overrides let a caller drop the guardrail or re-enable the shell. Would a harness `before_invocation` lifecycle hook (a Lambda that denies requests carrying overrides) fully close it, and what does it add in cost and latency? *(documented in the harness docs, not built; candidate for Phase 6 or "what I would do for production")*
 - **Denied-topic coverage.** The CLASSIC tier let "best pizza topping" through. Would the STANDARD tier (needs a cross-Region guardrail profile) catch it, and is the extra setup worth it? *(measure in Phase 5)*
 - **Does a stronger model obey "only name services you were given"?** Nova 2 Lite did not, reliably. *(Phase 5: Haiku 4.5 on the same checks)*
-- **Alias handling in the service-name check.** Exercise E8. How much does it reduce false alarms without letting a real invention through?
+- **Alias handling in the service-name check.** Exercise E8. How much does it reduce false alarms without letting a genuinely ungrounded name through?
 - **Real cost per brief.** Model tokens measured at about $0.011; guardrail and runtime shares come from Cost Explorer. *(check 2026-10-08, then after the Phase 5 batch)*
+- **Haiku 4.5 comparison.** Blocked by an Anthropic use-case form only the account owner can submit in the Bedrock console (one earlier call worked, then none did: unexplained). Options: submit the form and re-run the Haiku arm (about $2.5 all-in); substitute a stronger Amazon model that needs no form; or skip. *(awaiting the user's decision)*
+- **Closing the tool-result tampering hole by design.** Proposal: the ROI tool takes only `company_name` and reads the profile itself (needs a `GetItem` statement on the ROI role, a Lambda change, a schema change and a prompt change; one Terraform apply). It removes the tampering attack by construction; the canary-printing half of the attack (attacker-chosen text in the answer) needs a different defence. Exercise E9. *(awaiting the user's decision)*
+- **A tolerant company lookup.** The lookup is exact, so punctuation breaks it. Strip trailing punctuation in `normalise`, or accept it as a safe failure ("not in the database")?

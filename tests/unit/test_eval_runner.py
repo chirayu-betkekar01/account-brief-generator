@@ -39,6 +39,14 @@ def test_brief_runs_record_each_deterministic_check_and_other_runs_do_not():
     assert judge(case(), BriefRun(answer="no", stop_reasons=["end_turn"]), model="nova").checks == {}
 
 
+def test_brief_runs_keep_the_detail_of_every_failing_check_and_the_tool_results():
+    brief = Case(id="b1", category="brief", prompt='Prepare a discovery brief for "Northwind Logistics".', rules=("not_withheld",))
+    run = BriefRun(answer="## 1. Account summary\nx", tool_results=["{}"], stop_reasons=["end_turn"])
+    result = judge(brief, run, model="nova")
+    assert "headings found" in result.check_details["six_sections_in_order"]
+    assert result.tool_results == ["{}"]
+
+
 def test_a_run_that_errored_before_any_output_fails_cleanly():
     result = judge(case(), BriefRun(error="AccessDeniedException"), model="haiku")
     assert result.passed is False

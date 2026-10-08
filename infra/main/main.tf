@@ -43,6 +43,9 @@ module "storage_data" {
   project       = var.project
   accounts_file = "${local.data_dir}/accounts.json"
 
+  # Two clearly labelled test companies whose records contain planted instructions (Phase 5).
+  extra_accounts_file = var.include_eval_fixtures ? "${local.data_dir}/eval_accounts.json" : null
+
   depends_on = [terraform_data.budget_guard]
 }
 
@@ -148,9 +151,10 @@ module "agent" {
     kb      = module.kb_retrieve.function_arn
   }
 
-  guardrail_arn      = module.guardrails.guardrail_arn
-  guardrail_version  = module.guardrails.guardrail_version
-  system_prompt_file = "${path.root}/../../agent/system_prompt.md"
+  guardrail_arn        = module.guardrails.guardrail_arn
+  guardrail_version    = module.guardrails.guardrail_version
+  system_prompt_file   = "${path.root}/../../agent/system_prompt.md"
+  comparison_model_ids = var.comparison_model_ids
 
   depends_on = [terraform_data.budget_guard]
 }

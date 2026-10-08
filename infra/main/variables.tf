@@ -10,6 +10,18 @@ variable "project" {
   default     = "discovery-brief-agent"
 }
 
+variable "include_eval_fixtures" {
+  description = "Load the two red-team test companies (data/eval_accounts.json) into the accounts table so the evaluation can test attacks that arrive through tool results. Set false for a demo with only the five real accounts."
+  type        = bool
+  default     = true
+}
+
+variable "comparison_model_ids" {
+  description = "Extra inference profiles the agent role may call, used only by the Phase 5 model comparison via a per-call override. Empty list grants nothing beyond the main model."
+  type        = list(string)
+  default     = ["us.anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
 variable "alarm_email" {
   description = "Optional address for CloudWatch alarm notifications. Leave empty for none. If set, put it in a git-ignored terraform.tfvars, never in the repo; AWS sends a confirmation email."
   type        = string

@@ -1,7 +1,7 @@
 """Planning a batch, estimating its cost, and judging one run. No AWS calls here."""
 
 from eval_report import RunResult
-from eval_rules import RULES, brief_check_map
+from eval_rules import RULES, brief_checks
 
 # Rough all-in dollars per run (model tokens + guardrail + runtime), from the measured Phase 4 runs and
 # the price list. Briefs make five model calls; refusals are one call or stopped before the model runs.
@@ -37,6 +37,7 @@ def estimate_cost(runs):
 def judge(case, run, model, repeat=1):
     """Apply the case's rules to the run and build the result record."""
     rules = [(name, *RULES[name](run)) for name in case.rules]
+    checks = brief_checks(run) if case.category == "brief" else []
     return RunResult(
         case_id=case.id,
         category=case.category,
@@ -44,7 +45,9 @@ def judge(case, run, model, repeat=1):
         repeat=repeat,
         passed=all(ok for _, ok, _ in rules),
         rules=rules,
-        checks=brief_check_map(run) if case.category == "brief" else {},
+        checks={c.name: c.passed for c in checks},
+        check_details={c.name: c.detail for c in checks},
+        tool_results=list(run.tool_results),
         guardrail_blocked=run.guardrail_intervened,
         input_tokens=run.input_tokens,
         output_tokens=run.output_tokens,

@@ -27,12 +27,13 @@ Ask for **more depth** or **faster** at any point.
 | [phase-2-lambdas-and-data.md](phase-2-lambdas-and-data.md) | Lambda, DynamoDB, one IAM role per function, test-first development, the ROI model | 60 min |
 | [phase-3-knowledge-base.md](phase-3-knowledge-base.md) | Embeddings, vector search, RAG, S3 Vectors vs alternatives, the knowledge-base IAM role, and a real retrieval experiment | 60 min |
 | [phase-4-agent.md](phase-4-agent.md) | Agents vs workflows, AgentCore (harness, gateway), guardrail policies, confused deputy, deterministic checks, and nine things that went wrong with the evidence for each | 75 min |
+| [phase-5-evaluation.md](phase-5-evaluation.md) | Evaluating an LLM app: non-determinism, mechanical rules, layers, indirect prompt injection (measured: it worked), why a red test is not a finding until you read it | 60 min |
 | [exercises.md](exercises.md) | Every hands-on exercise (done and not yet done), with hints, model answers and review rubrics | varies |
 | [../../LEARNING_NOTES.md](../../LEARNING_NOTES.md) | Glossary, decision table (what we chose, what else we considered, what would change our mind), interview Q&A log | reference |
 | [../costs.md](../costs.md) | Verified prices and the cost model; a good case study in "how do I justify a number" | 20 min |
 | [../architecture.md](../architecture.md) | The architecture diagram and request flow | 15 min |
 
-Later phases add `phase-5-...` and `phase-6-...` here as they are built.
+Phase 6 adds the final write-ups here.
 
 ## Suggested study order
 

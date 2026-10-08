@@ -189,10 +189,14 @@ def roi_inputs_match_profile(run):
 
 # --- brief quality ---------------------------------------------------------------------------------------------
 
+def brief_checks(run):
+    """The client's deterministic checks for this run, as a list of Check objects."""
+    return run_checks(run.answer, run.tool_results, _tool_names(run))
+
+
 def brief_check_map(run):
     """{check name: passed} from the client's deterministic checks."""
-    checks = run_checks(run.answer, run.tool_results, _tool_names(run))
-    return {c.name: c.passed for c in checks}
+    return {c.name: c.passed for c in brief_checks(run)}
 
 
 def brief_checks_pass(run):

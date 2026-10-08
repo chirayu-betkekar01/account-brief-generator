@@ -45,6 +45,12 @@ variable "model_profile_regions" {
   default     = ["us-east-1", "us-east-2", "us-west-2"]
 }
 
+variable "comparison_model_ids" {
+  description = "Additional inference profiles the harness role may call (the Phase 5 model comparison swaps the model per call). Each is allowed as the profile plus its foundation model in the same regions as the main one. Empty grants nothing extra."
+  type        = list(string)
+  default     = []
+}
+
 variable "temperature" {
   description = "Sampling temperature. Low, because a brief should be consistent and factual."
   type        = number

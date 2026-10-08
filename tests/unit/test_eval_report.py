@@ -1,6 +1,6 @@
 """Turning many run results into the numbers and the markdown report."""
 
-from eval_report import RunResult, aggregate, layer_breakdown, model_cost, per_check_rates, render_markdown
+from eval_report import RunResult, aggregate, flagged_services, layer_breakdown, model_cost, per_check_rates, render_markdown
 
 PRICES = {"nova": (0.33, 2.75), "haiku": (1.10, 5.50)}
 
@@ -54,6 +54,19 @@ def test_layer_breakdown_separates_guardrail_blocks_from_model_refusals():
     ]
     layers = layer_breakdown(results)
     assert layers["nova"] == {"guardrail": 2, "model_or_tools": 1, "failed": 1}
+
+
+def test_flagged_services_are_counted_by_name_across_brief_runs():
+    a = "not found word for word in any retrieved passage: AWS Lambda, Amazon RDS"
+    b = "not found word for word in any retrieved passage: Amazon RDS"
+    results = [
+        result(category="brief", model="nova", checks={"services_supported": False}),
+        result(category="brief", model="nova", checks={"services_supported": False}, repeat=2),
+        result(category="brief", model="nova", checks={"services_supported": True}, repeat=3),
+    ]
+    results[0].check_details = {"services_supported": a}
+    results[1].check_details = {"services_supported": b}
+    assert flagged_services(results)["nova"] == {"Amazon RDS": 2, "AWS Lambda": 1}
 
 
 def test_markdown_report_shows_the_counts_failures_and_cost():
