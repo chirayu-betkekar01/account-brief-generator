@@ -43,11 +43,19 @@ def terraform_output(name):
     return result.stdout.strip()
 
 
-def clean_company(name):
+def company_error(name):
+    """Why this is not a usable company name, or None if it is. Shared by the CLI and the web page."""
     name = name.strip()
     if not name or len(name) > MAX_COMPANY_LENGTH or re.search(r"[\x00-\x1f\x7f]", name):
-        sys.exit(f"Give a company name of 1 to {MAX_COMPANY_LENGTH} characters, on one line.")
-    return name
+        return f"Give a company name of 1 to {MAX_COMPANY_LENGTH} characters, on one line."
+    return None
+
+
+def clean_company(name):
+    problem = company_error(name)
+    if problem:
+        sys.exit(problem)
+    return name.strip()
 
 
 def with_progress(events):

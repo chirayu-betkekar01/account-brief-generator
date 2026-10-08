@@ -16,7 +16,7 @@ MAIN := terraform -chdir=infra/main
 PY ?= python
 
 .PHONY: help bootstrap-init bootstrap-plan bootstrap-apply bootstrap-destroy \
-        init plan apply ingest destroy destroy-all smoke brief test price-check fmt lint
+        init plan apply ingest destroy destroy-all smoke brief ui test price-check fmt lint
 
 help:
 	@echo 'Targets:'
@@ -32,6 +32,7 @@ help:
 	@echo '  destroy-all         destroy, then remove the budget as well'
 	@echo '  smoke               invoke the deployed Lambdas and check their answers'
 	@echo '  brief               ask the agent for a brief: make brief COMPANY="Northwind Logistics"'
+	@echo '  ui                  open the web page for the agent (needs the stack deployed)'
 	@echo '  test                run the unit tests (activate the .venv first, or pass PY=path)'
 	@echo '  price-check         verify unit prices against the AWS Price List API'
 	@echo '  fmt                 terraform fmt'
@@ -72,6 +73,9 @@ smoke:
 
 brief:
 	$(PY) client/brief.py "$(COMPANY)" $(ARGS)
+
+ui:
+	$(PY) -m streamlit run client/app.py
 
 test:
 	$(PY) -m pytest

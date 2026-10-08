@@ -86,6 +86,16 @@ def test_bad_company_names_are_rejected_before_any_aws_call(stub, name):
     assert stub["asked"] == []
 
 
+@pytest.mark.parametrize("name", ["Northwind Logistics", "  Acme Inc.  "])
+def test_company_error_accepts_good_names(name):
+    assert brief.company_error(name) is None
+
+
+@pytest.mark.parametrize("name", ["", "   ", "x" * 101, "two\nlines"])
+def test_company_error_explains_what_is_wrong(name):
+    assert "company name" in brief.company_error(name)
+
+
 def test_the_company_name_is_trimmed(stub):
     brief.main(["  Northwind Logistics  "])
     assert stub["asked"][0][1] == "Northwind Logistics"
