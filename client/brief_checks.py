@@ -20,7 +20,9 @@ _HEADING = re.compile(r"^## (\d)\. ", re.M)
 # "AWS Foo", "Amazon Foo Bar", and names with a lowercase joiner such as "AWS Identity and Access Management".
 _SERVICE_NAME = re.compile(r"\b(?:AWS|Amazon) [A-Z][A-Za-z0-9]+(?: (?:and |for |of )?[A-Z][A-Za-z0-9]+){0,3}")
 _LINK_URL = re.compile(r"\]\((https?://[^)\s]+)\)")
-_NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+# An optional leading minus (ASCII or Unicode), but only when it is not glued to a preceding word or digit:
+# in "1,000-2,000" the hyphen is a range, not a sign.
+_NUMBER = re.compile(r"(?:(?<![\w.,])[-−])?\d[\d,]*(?:\.\d+)?")
 
 
 # What the ROI tool is given (its argument names) and where each value lives in the profile.
@@ -100,16 +102,24 @@ def _roi_numbers(roi):
 
 
 def _significant_numbers(text):
-    """Numbers worth checking: four or more digits, or with a decimal point (not 1, 2, 3 or years)."""
+    """Numbers worth checking: four or more digits, or with a decimal point (not 1, 2, 3 or years).
+
+    Yields (text as written, signed value). A losing case has negative figures, and a minus sign the
+    model drops or adds is a difference worth seeing."""
     for raw in _NUMBER.findall(text):
-        cleaned = raw.replace(",", "").rstrip(".")
+        negative = raw[0] in "-−"
+        cleaned = raw.lstrip("-−").replace(",", "").rstrip(".")
         if "." in cleaned or len(cleaned) >= 4:
-            yield raw, float(cleaned)
+            yield raw, -float(cleaned) if negative else float(cleaned)
 
 
 def _matches_any(value, candidates):
     tolerance = 0.051 if value != int(value) else 0.5
-    return any(abs(value - c) <= tolerance for c in candidates)
+    if value < 0:
+        return any(abs(value - c) <= tolerance for c in candidates)
+    # An unsigned figure may describe a loss ("a loss of $219,288"), so it matches on size alone. Known
+    # gap: a loss shown as a plain positive number passes (see test_brief_checks.py).
+    return any(abs(value - abs(c)) <= tolerance for c in candidates)
 
 
 def run_checks(answer, tool_results, tool_calls=None):

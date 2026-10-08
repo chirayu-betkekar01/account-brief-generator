@@ -95,6 +95,82 @@
       ],
       "compliance": ["SOX", "State insurance regulations"],
       "cloud_maturity": "none"
+    },
+    {
+      "company_name": "Lakeshore County Services",
+      "industry": "Local government",
+      "employees": 1600,
+      "headquarters": "Duluth, Minnesota",
+      "servers": 120,
+      "storage_tb": 70,
+      "annual_infra_cost_usd": 1400000,
+      "annual_growth_pct": 5,
+      "current_environment": "One server room in the county building and a small recovery site, running mostly packaged software on ageing hardware.",
+      "workloads": ["Permitting and licensing", "Utility billing", "Records archive"],
+      "stated_pain_points": [
+        "Server hardware goes out of vendor support next year",
+        "Records requests take days because the archive is on tape",
+        "There is no tested disaster recovery plan"
+      ],
+      "compliance": ["CJIS", "State records retention"],
+      "cloud_maturity": "none"
+    },
+    {
+      "company_name": "Pinecrest University Systems",
+      "industry": "Higher education and research",
+      "employees": 4800,
+      "headquarters": "Boise, Idaho",
+      "servers": 280,
+      "storage_tb": 600,
+      "annual_infra_cost_usd": 4400000,
+      "annual_growth_pct": 20,
+      "current_environment": "A central data centre plus departmental research clusters, with e-mail already moved to a software-as-a-service product.",
+      "workloads": ["Student information system", "Research data storage", "Learning management system"],
+      "stated_pain_points": [
+        "Research data grows faster than the storage budget",
+        "Load peaks every enrolment week",
+        "Departments buy their own servers outside central IT"
+      ],
+      "compliance": ["FERPA"],
+      "cloud_maturity": "mixed"
+    },
+    {
+      "company_name": "Halcyon Mutual Bank",
+      "industry": "Regional retail banking",
+      "employees": 5200,
+      "headquarters": "Omaha, Nebraska",
+      "servers": 600,
+      "storage_tb": 450,
+      "annual_infra_cost_usd": 11500000,
+      "annual_growth_pct": 5,
+      "current_environment": "Two data centres, with the core banking package on Unix servers and card processing in a separate PCI-scoped network.",
+      "workloads": ["Core banking", "Online banking portal", "Card processing", "Fraud analytics"],
+      "stated_pain_points": [
+        "Disaster recovery tests take a weekend and still miss recovery targets",
+        "Online banking slows down on payday",
+        "Regulators keep asking for evidence of tested recovery"
+      ],
+      "compliance": ["PCI DSS", "SOX"],
+      "cloud_maturity": "early"
+    },
+    {
+      "company_name": "Lighthouse Archive Trust",
+      "industry": "Non-profit digital archive",
+      "employees": 180,
+      "headquarters": "Providence, Rhode Island",
+      "servers": 30,
+      "storage_tb": 500,
+      "annual_infra_cost_usd": 500000,
+      "annual_growth_pct": 10,
+      "current_environment": "A small data centre with a large, mostly cold archive on inexpensive disk and tape, run by a team of four.",
+      "workloads": ["Digitised collections archive", "Public search portal"],
+      "stated_pain_points": [
+        "The archive grows by about a tenth every year",
+        "The tape library is nearing end of life",
+        "Staff time goes on hardware instead of access for the public"
+      ],
+      "compliance": ["Records preservation standards"],
+      "cloud_maturity": "none"
     }
   ]
 }

@@ -205,3 +205,79 @@ def test_tool_call_check_is_skipped_when_calls_are_not_supplied():
     answer, tools = load("northwind")
     names = [c.name for c in run_checks(answer, tools)]
     assert "tool_calls_as_instructed" not in names
+
+
+# --- A losing company: the ROI tool returns negative figures --------------------------------------
+# Found on 2026-10-07 by running the live agent on the Lighthouse Archive Trust account: the brief was
+# right (-219,288, -11.7%) and the check flagged every figure, because it read numbers without their
+# minus signs and compared them with the tool's negative values. Every earlier account had won.
+
+LIGHTHOUSE_ROI_SECTION = """## 5. ROI (3-year, preliminary)
+**Preliminary estimate based on the stated inputs and the listed assumptions**
+
+| Year | On-premises cost (USD) | AWS cost (USD) | Savings (USD) |
+|------|-----------------------|----------------|---------------|
+| 1    | 500,000               | 639,528        | -139,528      |
+| 2    | 550,000               | 587,981        | -37,981       |
+| 3    | 605,000               | 646,779        | -41,779       |
+| **Total** | **1,655,000** | **1,874,288** | **-219,288** |
+
+**ROI:** -11.7 % over three years
+**Break-even year:** None in the first three years
+"""
+
+
+def _lighthouse_answer(roi_section=LIGHTHOUSE_ROI_SECTION):
+    return "## 1. A\n\n## 2. B\n\n## 3. C\n\n## 4. D\n\n" + roi_section + "\n## 6. Risks\n"
+
+
+def _lighthouse_tools():
+    from roi_estimator.handler import lambda_handler
+
+    roi = lambda_handler(
+        {"on_prem_annual_cost_usd": 500000, "servers": 30, "storage_tb": 500, "annual_growth_pct": 10}, None
+    )
+    assert roi["totals"]["savings_usd"] < 0  # the premise of these tests
+    return [json.dumps(roi)]
+
+
+def _roi_check(answer, tools):
+    return result(run_checks(answer, tools), "roi_numbers_match_tool")
+
+
+def test_a_loss_reported_with_minus_signs_matches_the_tool():
+    assert _roi_check(_lighthouse_answer(), _lighthouse_tools()).passed
+
+
+def test_a_unicode_minus_sign_is_read_as_a_minus_sign():
+    answer = _lighthouse_answer(LIGHTHOUSE_ROI_SECTION.replace("-", "−"))
+    assert _roi_check(answer, _lighthouse_tools()).passed
+
+
+def test_a_wrong_figure_in_a_losing_case_still_fails():
+    answer = _lighthouse_answer(LIGHTHOUSE_ROI_SECTION.replace("-219,288", "-219,289"))
+    check = _roi_check(answer, _lighthouse_tools())
+    assert not check.passed
+    assert "-219,289" in check.detail
+
+
+def test_a_minus_sign_added_to_a_figure_the_tool_reports_as_positive_fails():
+    answer, tools = load("northwind")
+    check = result(run_checks(answer.replace("5,391,484", "-5,391,484"), tools, GOOD_CALLS), "roi_numbers_match_tool")
+    assert not check.passed
+
+
+def test_an_unsigned_figure_for_a_loss_is_accepted_which_is_a_known_gap():
+    # "a loss of $219,288" is how a person would write it, so size alone has to match. The cost: a brief
+    # that shows a loss as a plain positive number (a sign flip by omission) passes this check.
+    answer = _lighthouse_answer(LIGHTHOUSE_ROI_SECTION.replace("-219,288", "219,288"))
+    assert _roi_check(answer, _lighthouse_tools()).passed
+
+
+def test_a_hyphen_between_two_numbers_is_a_range_not_a_minus_sign():
+    answer, tools = load("northwind")
+    ranged = answer.replace(
+        "- **ROI percentage:** 69.4 %", "- **ROI percentage:** 69.4 %\n- AWS cost, years 1 and 2: 3,139,584-2,183,534"
+    )
+    assert "3,139,584-2,183,534" in ranged
+    assert result(run_checks(ranged, tools, GOOD_CALLS), "roi_numbers_match_tool").passed
