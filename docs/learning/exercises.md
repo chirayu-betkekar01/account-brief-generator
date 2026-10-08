@@ -310,14 +310,14 @@ Each version must state the finding, what it means for *that* reader, and one ne
 **Goal:** Learn to verify claims instead of trusting prose, including your own.
 
 **Spec:** For each claim below, say (a) where the evidence is, (b) the command or file that re-checks it, and (c) whether it is *measured*, *estimated* or *designed*.
-1. "329 unit tests." 2. "The main stack has 89 resources." 3. "Idle cost is $0 an hour." 4. "About $0.05 all-in per brief."
+1. "337 unit tests." 2. "The main stack has 93 resources." 3. "Idle cost is $0 an hour." 4. "About $0.05 all-in per brief."
 5. "The agent obeyed a planted instruction 6 of 6 times." 6. "30 of 30 typed attacks were refused."
 
 **Hints:** Two of these cannot be proved by a command on your laptop alone. One of the commands has a trap in its filter.
 
 <details><summary>Model answer</summary>
 
-1. Measured. `python -m pytest -o addopts="" -v | grep -c PASSED` (329 at the end of Phase 6).
+1. Measured. `python -m pytest -o addopts="" -v | grep -c PASSED` (337 after the extra demo accounts and the signed-number fix).
 2. Measured. `terraform -chdir=infra/main state list | grep -vE '(^|\.)data\.' | wc -l`. The trap: filtering only `^data\.` leaves module-level data sources in and gives 110.
 3. Designed. Evidence is the resource-by-resource table in `docs/costs.md` section 3 plus `make price-check`; the proof is the bill on a day with no use (Cost Explorer), which only AWS can show.
 4. Estimated. `docs/costs.md` section 4 and the runner's `ALL_IN_ESTIMATE`; the measured part is $0.011 of model tokens. Replace the estimate with Cost Explorer's figure divided by the number of briefs.
@@ -326,6 +326,23 @@ Each version must state the finding, what it means for *that* reader, and one ne
 </details>
 
 **Review rubric:** correct measured/estimated/designed label for all six (must); a re-check for each that does not rely on "trust me" (must); spots that 3 and 4 need the bill (strong); finds the filter trap in 2 (bonus).
+
+---
+
+## E12. Close the sign-flip gap in the ROI check (Phase 6, open)
+
+**Goal:** Practise tightening a check without breaking the cases it already handles.
+
+**Spec:** `roi_numbers_match_tool` accepts an unsigned figure for a loss, because people write "a loss of $219,288". So a brief that shows Lighthouse's -219,288 as a plain **219,288** under a heading "Savings" passes, and that turns a loss into a gain. Add a check `roi_loss_not_hidden` that applies only when the tool's `totals.savings_usd` is negative. Write the failing tests first: the real Lighthouse ROI section passes; the same section with every minus sign removed fails; a brief that says "a loss of ..." in words passes; a winning company is untouched.
+
+**Hints:** What evidence of a loss would a human accept (a minus sign before a figure, the word loss or negative, "no break-even")? Which of those can a model drop most easily? Keep the check blunt: a false alarm costs a glance.
+
+<details><summary>Model answer</summary>
+
+Rule: when `savings_usd < 0` (or `breakeven_year is None`), the section 5 text must contain at least one negative figure (`-` or the Unicode minus directly before a digit) **or** one of the words `loss`, `negative`, `no break-even`, `none`. Tests (red first): real section passes; all minus signs stripped and the words "loss"/"negative"/"break-even: None" absent fails; a section that says "The company would lose $219,288 over three years" passes; Northwind (a winner) produces no result for this check. Implementation: read `totals.savings_usd` from the parsed ROI result, search the section, return a `Check` named `roi_loss_not_hidden`. What it still cannot catch: a loss described as a gain in prose ("strong savings") next to a stripped number; only a human or a model judge reading meaning would. Record that as the new known gap.
+</details>
+
+**Review rubric:** tests first, including the case that must still pass (must); applies only to losing results (must); names what it still cannot catch (strong); does not weaken the existing number check (bonus).
 
 ---
 

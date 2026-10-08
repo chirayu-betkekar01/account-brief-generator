@@ -4,7 +4,7 @@ An AI agent on **Amazon Bedrock AgentCore** that prepares a pre-sales discovery 
 
 It is also an exercise in doing an AI project the way a customer would need it done: a budget alarm before any spend, least-privilege roles, a measured evaluation including attacks, and honest documentation of what does not work.
 
-> **Synthetic data only.** Five fictional companies, no real customer data. The knowledge base holds 17 short paraphrases of AWS documentation, each with a source link and a check date.
+> **Synthetic data only.** Nine fictional companies, no real customer data. The knowledge base holds 17 short paraphrases of AWS documentation, each with a source link and a check date.
 
 ## The problem
 
@@ -33,7 +33,7 @@ For Northwind Logistics (4,200 employees, 340 servers, 180 TB, $3.9M a year on i
 |---|---|---|---|---|---|
 | Northwind Logistics | $13,160,160 | $7,768,676 | $5,391,484 | 69.4% | Year 1 |
 
-That number leans on one judgement call: the share of today's bill that never goes away (staff, licences, network). Moving it from 60% to 30% moves the ROI from about 26% to about 104%. The brief is meant to show that sensitivity, not hide it.
+That number leans on one judgement call: the share of today's bill that never goes away (staff, licences, network). Moving it from 60% to 30% moves the ROI from about 26% to about 104%. The brief is meant to show that sensitivity, not hide it. And not every company wins: for Lighthouse Archive Trust, a storage-heavy archive that is cheap to run on premises, the same tool returns -11.7% and no breakeven, and the brief says so.
 
 After the brief, the client runs **deterministic checks** against the tool results: every link came from a retrieved passage, every ROI figure is in the tool output, the ROI tool received the profile's real numbers, the section order and question count are right.
 
@@ -130,7 +130,7 @@ Three runs per case give rough rates; a difference of one or two runs is noise. 
 - **Idle: $0.00 an hour.** Prices verified against the AWS Price List API ([docs/costs.md](docs/costs.md)).
 - **Per brief:** about $0.011 of model tokens (measured), about $0.05 all-in including the guardrail and runtime (estimate, to be confirmed against Cost Explorer).
 - **Whole build:** budgeted under $25 with an alarm at 20, 50, 80 and 100%. Hard caps live in the agent itself: 12 steps, 6,000 output tokens, 180 seconds, memory off.
-- **Teardown:** `make destroy` removes all 89 resources of the main stack and keeps the budget. `make destroy-all` removes the budget too.
+- **Teardown:** `make destroy` removes all 93 resources of the main stack and keeps the budget. `make destroy-all` removes the budget too.
 
 ## Run it yourself
 
@@ -140,7 +140,7 @@ You need an AWS account you are happy to experiment in, [Terraform](https://deve
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
-make test                                   # 329 unit tests, offline, no AWS needed
+make test                                   # 337 unit tests, offline, no AWS needed
 
 # One-time: sign in, then create the budget alarm FIRST.
 aws login --profile discovery-sandbox       # or any profile; export AWS_PROFILE=<it>
@@ -157,7 +157,7 @@ make brief COMPANY="Northwind Logistics"    # or: make ui
 make destroy                                # when you stop, so nothing keeps running
 ```
 
-The demo companies are Northwind Logistics, Harborview Health, Summit Ridge Retail, Brightwave Media and Alder & Finch Insurance.
+The demo companies are Northwind Logistics, Harborview Health, Summit Ridge Retail, Brightwave Media, Alder & Finch Insurance, Lakeshore County Services, Pinecrest University Systems, Halcyon Mutual Bank and Lighthouse Archive Trust (the one the tool says loses money).
 
 To re-run the evaluation: `python scripts/eval_agent.py --models nova --repeats 3` (about $0.30 of model tokens; `--dry-run` shows the cost estimate first and `--max-usd` stops the run if it would exceed a limit).
 
@@ -170,20 +170,21 @@ To re-run the evaluation: `python scripts/eval_agent.py --models nova --repeats 
 | `agent/system_prompt.md` | The agent's instructions |
 | `client` | Command-line client, Streamlit page, and the deterministic checks |
 | `evaluation`, `scripts` | Evaluation cases, rules and runner; smoke test, price check, ingestion |
-| `data` | The five fictional companies, and two red-team records used only by the evaluation |
-| `tests` | 329 unit tests, with four real agent answers recorded as fixtures |
+| `data` | The nine fictional companies, and two red-team records used only by the evaluation |
+| `tests` | 337 unit tests, with four real agent answers recorded as fixtures |
 | `docs` | Overview, architecture, costs, evaluation results, demo script, blog draft, interview prep |
 | `docs/learning`, `LEARNING_NOTES.md` | Lessons, exercises with model answers, glossary, decisions, Q&A |
 
 ## Limitations
 
-- **Synthetic data, no CRM.** The five companies are fictional.
+- **Synthetic data, no CRM.** The nine companies are fictional.
 - **The ROI model is deliberately simple.** Three of its five assumptions (right-sizing, migration effort, retained cost) are judgement calls to validate with a real customer.
 - **Tool-result injection works** (above), and the guardrail can be overridden by an authorised caller.
 - **Nova 2 Lite is only partly faithful to the knowledge base**, and Haiku 4.5 was not compared: Bedrock required an Anthropic use-case form that only the account owner can submit, and the comparison was skipped.
 - **Retrieval is semantic only** and always returns its nearest neighbours; an off-topic question still scored 0.53 against 0.7 to 0.84 for relevant ones, so the score threshold (0.60) matters.
 - **The company lookup is an exact match**, so "Acme Inc." with a full stop is "not in the database". The client quotes names to avoid it.
 - **The service-name check is blunt on purpose**: a spelled-out name for an abbreviation in a passage is flagged too.
+- **The ROI-figure check does not notice a missing minus sign.** It accepts "a loss of $219,288", so a loss written as a plain positive number passes. A loss given a minus sign it should not have is flagged.
 - **Three runs per case** give rough rates, not tight confidence intervals.
 - **Sandbox shortcuts:** one admin user, local Terraform state, one region.
 

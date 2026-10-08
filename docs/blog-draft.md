@@ -18,7 +18,7 @@ All company data is synthetic.
 
 ## Cost discipline came first
 
-The first thing I deployed was a $25 budget alarm, in its own Terraform stack so that it survives teardown. A budget only warns, and AWS refreshes it a few times a day, so hard limits live in the agent: 12 steps, 6,000 output tokens, 180 seconds, memory off. Everything else is serverless. One brief costs about a cent in model tokens, and `make destroy` removes all 89 resources.
+The first thing I deployed was a $25 budget alarm, in its own Terraform stack so that it survives teardown. A budget only warns, and AWS refreshes it a few times a day, so hard limits live in the agent: 12 steps, 6,000 output tokens, 180 seconds, memory off. Everything else is serverless. One brief costs about a cent in model tokens, and `make destroy` removes all 93 resources.
 
 ## Then I tried to break it
 
@@ -47,4 +47,4 @@ I wrote 21 test cases and ran each three times: requests for personal data, off-
 
 I built this with Claude Code as my pair programmer. It wrote the code. I set the constraints: sandbox only, a budget ceiling, no apply without a reviewed plan, and evidence for every claim. I kept the decisions and the exercises in the repo, so I can explain any of them.
 
-The repo has the Terraform, the 329 unit tests, the evaluation and a README that lists what does not work. If you build agents for customers, run the attack that worked on mine against yours.
+The repo has the Terraform, the 337 unit tests, the evaluation and a README that lists what does not work. If you build agents for customers, run the attack that worked on mine against yours.

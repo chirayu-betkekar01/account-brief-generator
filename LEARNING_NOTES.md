@@ -127,6 +127,8 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 38 | **Remove the unused Haiku 4.5 permission (`comparison_model_ids` defaults to `[]`)** | Leave it in case the comparison runs later | The comparison was skipped; an unused permission is risk with no benefit. Plan: 0 to add, 1 to change, 0 to destroy. *(Applied 2026-10-07 after explicit approval; the live policy was read back: 10 statements, no Haiku, and a re-plan showed no changes.)* | The comparison is run: set the variable back, submit the Anthropic form first. |
 | 39 | **Disclose AI-assisted authorship in the README, blog and interview sheet** | Say nothing, or claim it was hand-written | Honest, defensible, and the interview question is coming anyway. The user's contribution (constraints, approvals, scope calls, decisions on record) is stated. | n/a |
 | 40 | **Label every number measured, estimated or designed, and re-run its command before publishing** | Quote figures from memory | Six claims in the first drafts were wrong or unsupported (module count, 3x price, ROI lines, model-access sentence, blog length, untested demo example). | n/a |
+| 41 | **The demo set includes one account that loses money (Lighthouse Archive Trust)** | Nine winners | The tool is meant to report a loss as it is, and a demo where everyone wins never shows it. It also exposed a checker bug the first time it ran (see 42). Pinned by a test, so changed assumptions cannot quietly turn it into a winner. | n/a |
+| 42 | **The ROI-figure check reads minus signs; an unsigned figure matches on size** | Compare absolute values only; require exact signs | Absolute-only would accept a minus sign added to a gain. Exact signs would flag the natural phrase "a loss of $219,288". The middle path flags an added minus and accepts an unsigned loss. **Known gap:** a loss written as a plain positive number passes (exercise E12). | A measured miss on real briefs. |
 
 ---
 
@@ -205,6 +207,10 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
   4. Markdown renderers treat `$...$` as maths; a brief full of prices must escape `$`.
   5. A test must fail for the right reason first (our stub tried to set an attribute on a list).
   6. Disclose how the work was built, and only claim what you can explain.
+- Later the same night, four more demo accounts (9 demo + 2 red-team = 11 rows; main stack 93 resources, 337 tests):
+  7. **Test data that only wins hides bugs.** The first live brief for the loss-making account was correct (-219,288, -11.7%), and the client check flagged every figure: it read numbers without their minus signs. Fixed test-first from the real brief.
+  8. A deliberate break confirmed the new hyphen test guards the regex (a hyphen in a range is not a minus sign).
+  9. An ambiguous "move ahead" was not accepted as approval for an apply; waiting for the explicit word cost one message and kept the rule intact.
 
 ---
 
@@ -236,6 +242,7 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 6 | Walk me through the project in two minutes. | *(model answer)* | | Problem; three rules (numbers from code, advice from sources, "I don't know" is an answer); serverless design with the budget first; the evaluation; the finding to remember: typed attacks refused 30 of 30, hidden instructions in data worked 6 of 6. Pitch in `docs/interview-prep.md`. |
 | 6 | How much of this did you write yourself? | *(model answer)* | | "I directed it with Claude Code as pair programmer: I set the constraints, approved each deploy from a reviewed plan, and made the scope calls. The decisions and reasons are in the repo and I can walk through any of them." Then do it; say what you are still learning. |
 | 6 | How would you let a customer's sales team use this? | *(model answer)* | | Not the local page. An API in front that fixes model, prompt, tools and guardrail; the customer's identity provider; per-user roles limited to their accounts; logging; human review until the evaluation shows an acceptable error rate. |
+| 6 | Your checker flagged a brief that was right. What do you do? | *(model answer)* | | Read the brief and the tool result side by side before touching either. Ours: the brief matched the tool exactly, but the checker dropped minus signs and the tool's figures were negative. Reproduce it as a test from the real output (red), fix the code (green), add the edge cases the bug suggests (a unicode minus, a hyphen in a range, a wrong figure still failing), and break the fix on purpose to prove the tests guard it. Then say what the fix still cannot catch. |
 
 ---
 
@@ -254,3 +261,4 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 - **Haiku 4.5 comparison.** Blocked by an Anthropic use-case form only the account owner can submit in the Bedrock console (one earlier call worked, then none did: unexplained). Options: submit the form and re-run the Haiku arm (about $2.5 all-in); substitute a stronger Amazon model that needs no form; or skip. *(decided 2026-10-07: skipped by the user; recorded as not run. The unused Haiku permission was removed from the harness role.)*
 - **Closing the tool-result tampering hole by design.** Proposal: the ROI tool takes only `company_name` and reads the profile itself (needs a `GetItem` statement on the ROI role, a Lambda change, a schema change and a prompt change; one Terraform apply). It removes the tampering attack by construction; the canary-printing half of the attack (attacker-chosen text in the answer) needs a different defence. Exercise E9. *(awaiting the user's decision)*
 - **A tolerant company lookup.** The lookup is exact, so punctuation breaks it. Strip trailing punctuation in `normalise`, or accept it as a safe failure ("not in the database")?
+- **Closing the sign-flip gap.** The ROI-figure check accepts an unsigned figure for a loss, so a loss written as a plain positive number passes. Exercise E12: a check that a losing result must be shown as a loss. *(not built)*

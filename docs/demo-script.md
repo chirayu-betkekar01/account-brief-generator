@@ -24,16 +24,19 @@ The stack costs $0 idle but `make destroy` removes it, so after a break it has t
 | 0:40 | Web page: type `Northwind Logistics`, click **Prepare brief**. While it runs, show the terminal or spinner. | "I ask for a brief on a fictional company. You can see it calling the profile tool, searching the knowledge base twice, then the ROI tool." |
 | 1:00 | The brief appears. Scroll to section 4, then section 5. | "Six sections. Every architecture bullet links to the document it came from. And the ROI is labelled preliminary, with the table and the five assumptions underneath. Three of them are judgement calls, and the brief says to validate them. Moving one of them swings the ROI from about 26 to about 104 percent, which is the real conversation with a customer." |
 | 1:30 | Open the **Checks** panel. | "After the answer, code checks the brief against what the tools returned: links, ROI figures, whether the maths tool got the profile's real numbers. Here it [passes everything / flags a service the documents never mention]. That second case is common: in my evaluation, twelve of fifteen briefs named AWS services the sources did not support." |
-| 1:50 | `docs/evaluation-baseline.md`, the headline table | "I measured it, including attacks. Thirty of thirty requests for personal data, off-topic answers and typed injections were refused. But instructions hidden inside a database record steered the agent six times out of six. That is my next fix: tools that take an identifier, not data. Cost per brief is about a cent in model tokens, and `make destroy` removes all 89 resources." |
+| 1:50 | `docs/evaluation-baseline.md`, the headline table | "I measured it, including attacks. Thirty of thirty requests for personal data, off-topic answers and typed injections were refused. But instructions hidden inside a database record steered the agent six times out of six. That is my next fix: tools that take an identifier, not data. Cost per brief is about a cent in model tokens, and `make destroy` removes all 93 resources." |
 | 2:00 | Stop | |
 
-## Optional beat (only if you have 10 seconds to spare)
+## Optional beats (only if you have 10 seconds to spare; pick one)
 
+**The honest loss.** Ask the page for `Lighthouse Archive Trust`. It is a storage-heavy archive that is cheap to run on premises, so the ROI tool returns about -11.7% with no breakeven, and the brief reports that plainly (live run, 2026-10-07: 10 of 11 checks passed). "The numbers come from code, and code is allowed to say no."
+
+**The unknown company.**
 Ask the page for `Acme Rocketry` (tested in the evaluation: refused to invent a profile in 3 of 3 runs). It is not in the database; the agent should say so instead of inventing a profile. "An unknown company gets 'not in the database', never a made-up one."
 
 ## What to say if you are asked
 
-- **"Is it using real customer data?"** No. Five fictional companies, by design.
+- **"Is it using real customer data?"** No. Nine fictional companies, by design.
 - **"Where does the ROI input come from in real life?"** An SE rarely has accurate numbers before the first meeting. This starts outside-in and its job is to choose which question to ask first; the next version would carry a provenance label on each input and return low, base and high cases.
 - **"Did you write all of it?"** The README's last section is honest about that: I directed the build with Claude Code as pair programmer and recorded every decision. Be ready to explain any of them.
 
@@ -46,4 +49,4 @@ Ask the page for `Acme Rocketry` (tested in the evaluation: refused to invent a 
 
 ## After you finish
 
-`make destroy`, type `yes`, and confirm it lists 89 resources. The budget alarm stays. Check Cost Explorer the next day and fill in the Actual column of [docs/costs.md](costs.md), section 7.
+`make destroy`, type `yes`, and confirm it lists 93 resources. The budget alarm stays. Check Cost Explorer the next day and fill in the Actual column of [docs/costs.md](costs.md), section 7.

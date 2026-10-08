@@ -31,7 +31,7 @@ This project is an **AI agent that does that preparation in about a minute.** Yo
 5. **A 3-year ROI estimate**, with every assumption printed next to the number.
 6. **Risks** to raise before the customer does.
 
-All company data is **synthetic** (five fictional companies). Nothing here touches real customer information.
+All company data is **synthetic** (nine fictional companies). Nothing here touches real customer information.
 
 ## 2. Why we are building it (the intent)
 
@@ -68,7 +68,7 @@ The tool also returns the five assumptions it used, each with a value, unit, rat
 *"40% of today's bill never goes away (staff, licences, network); this is a judgement call, validate with the customer"*.
 
 The honest part: that ROI moves from about 26% to about 104% as the "retained cost" assumption moves from 60% to 30%.
-The brief is meant to show that sensitivity, not hide it. And if AWS would cost more, the tool reports negative savings and no breakeven.
+The brief is meant to show that sensitivity, not hide it. And if AWS would cost more, the tool reports negative savings and no breakeven; the demo set includes one such company, Lighthouse Archive Trust (about -11.7% over three years).
 
 ---
 
@@ -87,7 +87,7 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 | **Command-line client** | `python client/brief.py "Northwind Logistics"` prints the brief, then runs deterministic checks (links, AWS service names and every ROI figure against the tool results) | BUILT, run against the live agent |
 | **Streamlit web page** | `make ui`: the same call and checks as the command line, in a browser tab on your machine. Never published; a hosted version needs a gate in front first | BUILT, run once against the live agent |
 | **Infrastructure as code** | Terraform stacks and modules; `make plan / apply / destroy` | Both stacks LIVE: the budget, and the accounts table plus two Lambdas |
-| **Unit tests** | 329 tests (moto fake AWS, stubbed clients, four real agent answers as fixtures), plus a post-deploy smoke test (22 checks against the real functions) | BUILT and passing |
+| **Unit tests** | 337 tests (moto fake AWS, stubbed clients, four real agent answers as fixtures), plus a post-deploy smoke test (22 checks against the real functions) | BUILT and passing |
 
 ---
 
@@ -114,7 +114,7 @@ flowchart LR
         l3["kb_retrieve"]
     end
 
-    ddb[("DynamoDB<br/>5 fictional companies")]
+    ddb[("DynamoDB<br/>9 fictional companies")]
     cfg["assumptions.json<br/>packaged with the Lambda"]
     kb["Bedrock<br/>Knowledge Base"]
     vec[("S3 Vectors<br/>search index")]
@@ -169,7 +169,7 @@ flowchart LR
         (LIVE)                    (LIVE)                 (LIVE)              one IAM role each
             |                       |                       |
             v                       v                       v
-   DynamoDB: 5 fictional     assumptions.json        Bedrock Knowledge Base
+   DynamoDB: 9 fictional     assumptions.json        Bedrock Knowledge Base
    companies (LIVE)          (LIVE)                    |            |
                                                        v            v
                                                 S3 Vectors      Titan embeddings
@@ -302,7 +302,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 
 ## 10. Honest limitations
 
-- **Synthetic data.** Five fictional companies; nothing is connected to a CRM or to real customers.
+- **Synthetic data.** Nine fictional companies; nothing is connected to a CRM or to real customers.
 - **The ROI model is deliberately simple.** No discounting, tax, risk adjustment or phased migration. Three of its five assumptions (right-sizing, migration effort, retained cost) are judgement calls that must be validated with a real customer.
 - **The grounding check does not work for this task.** Bedrock's grounding filter cannot run inside the agent, so the client runs it after the answer, and when tested it could not tell faithful sections from fabricated ones (a clean architecture section scored 0.17; one with five ungrounded services 0.05; even a section of verbatim ROI figures scored about 0.57). It is shown for information only. The client's deterministic checks do the real work.
 - **Those checks are blunt on purpose.** They compare words, not meaning, so a spelled-out name for an abbreviation in a passage ("AWS Identity and Access Management" for "IAM") is flagged. A false alarm is preferred to a missed ungrounded name, and the Phase 5 evaluation measured it: of 13 briefs flagged by the strict check, 12 are still flagged under a looser match.
@@ -339,16 +339,16 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 | Path | What is there |
 |---|---|
 | `infra/bootstrap/` and `infra/modules/budget/` | The budget alarm stack (LIVE) |
-| `infra/main/` | The main stack: wires all the modules below together (89 resources) |
+| `infra/main/` | The main stack: wires all the modules below together (93 resources) |
 | `infra/modules/` | `storage_data`, `lambda_function`, `knowledge_base`, `guardrails`, `agent`, `monitoring`, `budget` |
 | `src/lambdas/account_profile/`, `src/lambdas/roi_estimator/` | The tool code |
 | `src/lambdas/roi_estimator/assumptions.json` | The ROI assumptions a CFO can read |
-| `data/accounts.json` | The five fictional companies |
+| `data/accounts.json` | The nine fictional companies |
 | `agent/system_prompt.md` | The agent's instructions: what it may do, the facts rules and the brief format |
 | `client/` | The command-line client, the Streamlit page (`app.py`) and the checks |
 | `evaluation/`, `scripts/eval_agent.py` | The evaluation cases, rules, report and runner |
 | `data/eval_accounts.json` | Two red-team records with planted instructions (not demo data) |
-| `tests/` | 329 unit tests (fake AWS and recorded agent answers, no cost) |
+| `tests/` | 337 unit tests (fake AWS and recorded agent answers, no cost) |
 | `scripts/` | Price verification and the post-deploy smoke test |
 | `docs/costs.md` | Verified prices and the cost model |
 | `README.md` | The front door: problem, diagram, decisions, security, results, cost, how to run, limitations |

@@ -7,7 +7,7 @@
 - Tools go through the **Gateway** (MCP, IAM auth) to three Lambdas, one role each: account profile (DynamoDB), ROI (pure Python), knowledge-base search.
 - Knowledge base: 17 paraphrased AWS-doc summaries, Titan V2 embeddings, **S3 Vectors**.
 - After the answer, **deterministic checks** compare it with the tool results.
-- Terraform, 89 resources, `make destroy` removes them all; the budget stack survives.
+- Terraform, 93 resources, `make destroy` removes them all; the budget stack survives.
 
 **Trade-offs I can defend**
 | I chose | Over | Because |
@@ -19,7 +19,7 @@
 | Own budget stack | One stack | Must exist first and outlive teardown |
 | Mechanical eval rules | Model as judge | Free, repeatable |
 
-**Numbers to remember.** Idle $0/hour. About $0.011 model tokens per brief (measured), about $0.05 all-in (estimate). Nova 2 Lite $0.33 in / $2.75 out per million tokens. Budget $25, alerts at 20/50/80/100%. 329 unit tests. Evaluation: 30/30 typed attacks refused, 12/12 fabrication bait resisted, 0/15 legitimate briefs blocked, 0/6 tool-result attacks resisted, 1/15 briefs pass every check.
+**Numbers to remember.** Idle $0/hour. About $0.011 model tokens per brief (measured), about $0.05 all-in (estimate). Nova 2 Lite $0.33 in / $2.75 out per million tokens. Budget $25, alerts at 20/50/80/100%. 337 unit tests. Evaluation: 30/30 typed attacks refused, 12/12 fabrication bait resisted, 0/15 legitimate briefs blocked, 0/6 tool-result attacks resisted, 1/15 briefs pass every check.
 
 **Security in three lines.** Least privilege: one role per function, scoped to one table, one index, one model. Defence in depth: guardrail, prompt, three tools with the shell off, output guardrail, client checks. **Gaps I measured:** the guardrail doesn't scan tool results, and any authorised caller can override it per request.
 

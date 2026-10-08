@@ -139,11 +139,11 @@ Projected spend by phase (Nova 2 Lite, conservative):
 | `make destroy` | Removes the whole main stack, keeps the budget | Added with the main stack |
 | `make destroy-all` | Removes the main stack, then the budget | Added with the main stack |
 
-After Phase 5, `make destroy` removes all 89 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
+After the Phase 6 data change, `make destroy` removes all 93 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
 roles, policies, log groups, budget guard; 48 from Phase 3: docs bucket and 34 files, vector bucket and index,
 knowledge base and data source, service role, `kb_retrieve`; 24 from Phase 4: guardrail and version, gateway and 3
 targets, harness, two roles and policies, invoker policy, harness log group, 6 metric filters, 4 alarms, 1 dashboard;
-2 from Phase 5: the red-team records in the accounts table).
+2 from Phase 5: the red-team records in the accounts table; 4 from Phase 6: four more demo accounts in the same table).
 All of them cost $0 while idle; the budget stays. Note that old guardrail versions are kept on purpose
 (`skip_destroy`), but they are deleted together with the guardrail itself on a full destroy.
 
@@ -160,3 +160,4 @@ completed the next day.
 | 2026-10-07 | Phase 4 applied (24 resources): guardrail, AgentCore gateway + 3 targets, harness, roles, monitoring. Testing: about 9 full brief runs (several unguarded, one cut off at 1,000 tokens, one withheld by the guardrail), about 45 `ApplyGuardrail` calls, 7 adversarial prompts, 2 shell A/B runs | about $0.3-0.5 | *check 2026-10-08* |
 | 2026-10-07 | Phase 5: 2 DynamoDB items and 1 IAM statement applied ($0); about 250 evaluation runs (a 21-run pass, a 126-run batch of which the 63 Haiku runs failed before reaching the model, a 4-run re-check, a 63-run baseline) plus a few probes; model tokens about $0.67 | about $1.5-2.0 all-in | *check 2026-10-08* |
 | 2026-10-07 | Phase 6: one live run of the Streamlit page (one brief, about 21,000 input and 1,300 output tokens expected); one IAM statement removed from the harness role (0 added, 1 changed, 0 destroyed, $0); one more brief run afterwards to confirm the agent still works | about $0.10 | *check 2026-10-08* |
+| 2026-10-07 | Four more demo accounts applied (4 DynamoDB items, 0 changed, 0 destroyed); one live brief run for the new loss-making account, about 22,000 input and 1,200 output tokens | about $0.05 | *check 2026-10-08* |

@@ -13,7 +13,7 @@ is deciding something different. Analogy: **one set of ingredients, four menus.*
 (so: how to run it, what it costs, what is broken). The demo's reader is a person with two minutes (so: one story and one honest ending). The blog's reader is a
 practitioner who wants a lesson (so: the finding, with the surprise). The interview sheet's reader is you, under pressure (so: numbers and answers you can say aloud).
 
-**Claims need evidence you can re-run.** "329 unit tests" is a claim; `python -m pytest -o addopts="" -v | grep -c PASSED` is the evidence. "89 resources" is a claim;
+**Claims need evidence you can re-run.** "337 unit tests" is a claim; `python -m pytest -o addopts="" -v | grep -c PASSED` is the evidence. "93 resources" is a claim;
 `terraform -chdir=infra/main state list | grep -vE '(^|\.)data\.' | wc -l` is the evidence (and a first attempt at that filter gave 110, because it
 counted module-level data sources; the number was right, the filter was wrong). Before you publish a number, run the command that produces it.
 
@@ -75,6 +75,7 @@ garbled italics unless every `$` is escaped as `\$`. A test pins it.
    - The blog's first count was 902 words, over its 900-word limit; trimmed to 872 (834 without headings).
    - The unknown-company example in the demo used a name nobody had tested; it now uses "Acme Rocketry", which the evaluation refused to invent a profile for in 3 of 3 runs.
 5. Everything above went through the leak scan (no account ID, no e-mail) before each commit.
+6. **More accounts, and a bug.** Four more demo companies were added (one Terraform apply, 4 rows, $0). One of them, Lighthouse Archive Trust, is deliberately a loser: the ROI model returns -11.7% and no breakeven. The first live brief for it was correct, and the client's `roi_numbers_match_tool` check failed on every figure. The check read numbers without their minus signs while the tool's figures were negative. No earlier account had lost, so the check had never seen a negative number. It was fixed test-first from the real brief; a deliberate break showed the new hyphen test really guards the regex. Left open on purpose: a loss written as a plain positive number still passes (exercise E12).
 
 ---
 
@@ -102,13 +103,18 @@ See [LEARNING_NOTES.md](../../LEARNING_NOTES.md) rows 37 to 40. Headlines: the w
 **Q5. Present a bad result to a non-technical executive.**
 > "Lead with the decision, then the evidence. 'It refused every typed attack, but a hidden instruction steered it six times out of six. We can fix that by design, and we should not connect it to real data until we have.' Numbers, one plain-language cause, one fix, one date."
 
+**Q6. Your checker flagged a brief that was right. What do you do?**
+> "Read the brief and the tool result side by side before changing either. Here the brief matched the tool exactly; the checker dropped minus signs and the tool's figures were negative. I reproduced it as a failing test using the real brief, fixed the code, added the neighbouring cases (a Unicode minus, a hyphen in a range, a wrong figure that must still fail), and broke the fix on purpose to prove the tests guard it. Then I wrote down what the fix still cannot catch."
+
 ---
 
 ## 7. Check yourself
-- Which of these numbers are measured, which estimated, which designed: $0.011 per brief, $0.05 per brief, $0 idle, 89 resources, 30 of 30?
+- Which of these numbers are measured, which estimated, which designed: $0.011 per brief, $0.05 per brief, $0 idle, 93 resources, 30 of 30?
 - Why must the web page never be published to a public URL while it can call the harness?
 - What did the dollar-sign test protect against, and how would you notice without it?
 - Name three claims in the first drafts that the repo contradicted, and the command that settles each.
 - Why remove the Haiku permission when it was already working and harmless?
+- Why did a correct brief fail a check, and why had it never failed before?
+- Why does the check accept "a loss of $219,288" and what does that let through?
 
-Exercises for this phase: **P6** (the "why this vector store" paragraph), **E10** (same facts, three audiences) and **E11** (audit the README) in [exercises.md](exercises.md).
+Exercises for this phase: **P6** (the "why this vector store" paragraph), **E10** (same facts, three audiences), **E11** (audit the README) and **E12** (close the sign-flip gap) in [exercises.md](exercises.md).
