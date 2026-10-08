@@ -13,7 +13,7 @@ is deciding something different. Analogy: **one set of ingredients, four menus.*
 (so: how to run it, what it costs, what is broken). The demo's reader is a person with two minutes (so: one story and one honest ending). The blog's reader is a
 practitioner who wants a lesson (so: the finding, with the surprise). The interview sheet's reader is you, under pressure (so: numbers and answers you can say aloud).
 
-**Claims need evidence you can re-run.** "337 unit tests" is a claim; `python -m pytest -o addopts="" -v | grep -c PASSED` is the evidence. "93 resources" is a claim;
+**Claims need evidence you can re-run.** "349 unit tests" is a claim; `python -m pytest -o addopts="" -v | grep -c PASSED` is the evidence. "93 resources" is a claim;
 `terraform -chdir=infra/main state list | grep -vE '(^|\.)data\.' | wc -l` is the evidence (and a first attempt at that filter gave 110, because it
 counted module-level data sources; the number was right, the filter was wrong). Before you publish a number, run the command that produces it.
 
@@ -52,7 +52,7 @@ garbled italics unless every `$` is escaped as `\$`. A test pins it.
 
 ## 3. The code
 
-- [client/app.py](../../client/app.py): `demo_companies()` reads the names from `data/accounts.json`; `harness_arn()` takes `HARNESS_ARN` or `terraform output` and shows the error in the page instead of exiting;
+- [client/app.py](../../client/app.py): the company dropdown is built from `brief.demo_companies()`, which re-reads `data/accounts.json` on every page run (so a new company appears on refresh) and ends with an "Other (type a name)" choice for untested names; `harness_arn()` takes `HARNESS_ARN` or `terraform output` and shows the error in the page instead of exiting;
   `show_run()` handles four outcomes (withheld by the guardrail, cut off or errored, a good brief, nothing); `show_checks()` lists the deterministic checks and opens the panel when one fails.
 - [client/brief.py](../../client/brief.py): `company_error()` was split out of `clean_company()`. The command line exits with the message; the page shows it. One rule, two presenters.
 - [tests/unit/test_brief_app.py](../../tests/unit/test_brief_app.py): Streamlit's `AppTest` runs the real script in-process with the AWS call stubbed. Cases: opens without calling the agent; shows the brief and checks; escapes dollar signs;

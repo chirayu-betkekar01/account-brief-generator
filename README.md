@@ -140,7 +140,7 @@ You need an AWS account you are happy to experiment in, [Terraform](https://deve
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
-make test                                   # 337 unit tests, offline, no AWS needed
+make test                                   # 349 unit tests, offline, no AWS needed
 
 # One-time: sign in, then create the budget alarm FIRST.
 aws login --profile discovery-sandbox       # or any profile; export AWS_PROFILE=<it>
@@ -153,7 +153,7 @@ make apply
 make ingest                                 # loads the 17 documents into the index
 make smoke                                  # calls the deployed Lambdas, 22 checks
 
-make brief COMPANY="Northwind Logistics"    # or: make ui
+make brief COMPANY="Northwind Logistics"    # or: make ui (a dropdown of the companies in data/accounts.json)
 make destroy                                # when you stop, so nothing keeps running
 ```
 
@@ -171,7 +171,7 @@ To re-run the evaluation: `python scripts/eval_agent.py --models nova --repeats 
 | `client` | Command-line client, Streamlit page, and the deterministic checks |
 | `evaluation`, `scripts` | Evaluation cases, rules and runner; smoke test, price check, ingestion |
 | `data` | The nine fictional companies, and two red-team records used only by the evaluation |
-| `tests` | 337 unit tests, with four real agent answers recorded as fixtures |
+| `tests` | 349 unit tests, with four real agent answers recorded as fixtures |
 | `docs` | Overview, architecture, costs, evaluation results, demo script, blog draft, interview prep |
 | `docs/learning`, `LEARNING_NOTES.md` | Lessons, exercises with model answers, glossary, decisions, Q&A |
 

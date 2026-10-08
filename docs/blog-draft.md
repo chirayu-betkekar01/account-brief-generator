@@ -47,4 +47,4 @@ I wrote 21 test cases and ran each three times: requests for personal data, off-
 
 I built this with Claude Code as my pair programmer. It wrote the code. I set the constraints: sandbox only, a budget ceiling, no apply without a reviewed plan, and evidence for every claim. I kept the decisions and the exercises in the repo, so I can explain any of them.
 
-The repo has the Terraform, the 337 unit tests, the evaluation and a README that lists what does not work. If you build agents for customers, run the attack that worked on mine against yours.
+The repo has the Terraform, the 349 unit tests, the evaluation and a README that lists what does not work. If you build agents for customers, run the attack that worked on mine against yours.
