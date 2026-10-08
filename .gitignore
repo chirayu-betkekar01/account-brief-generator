@@ -49,3 +49,6 @@ Thumbs.db
 
 # Raw evaluation output (model answers); the committed summary lives in docs/
 evaluation/results/
+
+# --- Local caches (downloaded AWS icon package; not redistributed) ---
+.cache/
