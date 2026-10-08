@@ -41,6 +41,13 @@ After the brief, the client runs **deterministic checks** against the tool resul
 
 ## Architecture
 
+[![Architecture of Presales Accelerator: client, AgentCore harness and gateway, guardrail, three Lambda tools, DynamoDB, knowledge base on S3 Vectors, CloudWatch, IAM and Budgets](docs/images/architecture.png)](docs/images/architecture.png)
+
+*Click for the full-size image (also as a vector: [architecture.svg](docs/images/architecture.svg)). It is drawn with the official AWS Architecture Icons by `make diagram`, which reads the company count, document count and harness limits from the repository, so the numbers on it match what is deployed. Amber boxes are weaknesses measured in the evaluation.*
+
+<details>
+<summary>Text version (Mermaid, renders on GitHub)</summary>
+
 ```mermaid
 flowchart LR
     user(["You<br/>CLI or web page"])
@@ -80,6 +87,8 @@ flowchart LR
     harness -.-> cw
     tools -.-> cw
 ```
+
+</details>
 
 One request: the client signs an `InvokeHarness` call with your AWS identity. The harness runs the model in a loop, screening every model call with the guardrail. The model calls the profile tool, searches the knowledge base two or three times, calls the ROI tool once, then writes the brief. Tool calls go through the Gateway, which invokes the three Lambdas. The client then checks the finished brief against what the tools returned.
 
@@ -142,7 +151,7 @@ You need an AWS account you are happy to experiment in, [Terraform](https://deve
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
-make test                                   # 349 unit tests, offline, no AWS needed
+make test                                   # 383 unit tests, offline, no AWS needed
 
 # One-time: sign in, then create the budget alarm FIRST.
 aws login --profile discovery-sandbox       # or any profile; export AWS_PROFILE=<it>
@@ -171,9 +180,10 @@ To re-run the evaluation: `python scripts/eval_agent.py --models nova --repeats 
 | `src/lambdas` | The three tool functions and the ROI assumptions |
 | `agent/system_prompt.md` | The agent's instructions |
 | `client` | Command-line client, Streamlit page, and the deterministic checks |
+| `docs/images` | The architecture diagram (`make diagram` redraws it from the repo) |
 | `evaluation`, `scripts` | Evaluation cases, rules and runner; smoke test, price check, ingestion |
 | `data` | The nine fictional companies, and two red-team records used only by the evaluation |
-| `tests` | 349 unit tests, with four real agent answers recorded as fixtures |
+| `tests` | 383 unit tests, with four real agent answers recorded as fixtures |
 | `docs` | Overview, architecture, costs, evaluation results, demo script, blog draft, interview prep |
 | `docs/learning`, `LEARNING_NOTES.md` | Lessons, exercises with model answers, glossary, decisions, Q&A |
 

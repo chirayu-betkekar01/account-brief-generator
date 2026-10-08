@@ -2,6 +2,8 @@
 
 Renders on GitHub. In VS Code, install the "Markdown Preview Mermaid Support" extension to preview it.
 
+A drawn version with the official AWS icons: [images/architecture.png](images/architecture.png) (vector: [architecture.svg](images/architecture.svg)). Redraw it with `make diagram`.
+
 ```mermaid
 flowchart LR
     user(["You<br/>CLI or Streamlit"])

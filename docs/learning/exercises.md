@@ -310,14 +310,14 @@ Each version must state the finding, what it means for *that* reader, and one ne
 **Goal:** Learn to verify claims instead of trusting prose, including your own.
 
 **Spec:** For each claim below, say (a) where the evidence is, (b) the command or file that re-checks it, and (c) whether it is *measured*, *estimated* or *designed*.
-1. "349 unit tests." 2. "The main stack has 93 resources." 3. "Idle cost is $0 an hour." 4. "About $0.05 all-in per brief."
+1. "383 unit tests." 2. "The main stack has 93 resources." 3. "Idle cost is $0 an hour." 4. "About $0.05 all-in per brief."
 5. "The agent obeyed a planted instruction 6 of 6 times." 6. "30 of 30 typed attacks were refused."
 
 **Hints:** Two of these cannot be proved by a command on your laptop alone. One of the commands has a trap in its filter.
 
 <details><summary>Model answer</summary>
 
-1. Measured. `python -m pytest -o addopts="" -v | grep -c PASSED` (349 after the dropdown).
+1. Measured. `python -m pytest -o addopts="" -v | grep -c PASSED` (383 after the diagram generator).
 2. Measured. `terraform -chdir=infra/main state list | grep -vE '(^|\.)data\.' | wc -l`. The trap: filtering only `^data\.` leaves module-level data sources in and gives 110.
 3. Designed. Evidence is the resource-by-resource table in `docs/costs.md` section 3 plus `make price-check`; the proof is the bill on a day with no use (Cost Explorer), which only AWS can show.
 4. Estimated. `docs/costs.md` section 4 and the runner's `ALL_IN_ESTIMATE`; the measured part is $0.011 of model tokens. Replace the estimate with Cost Explorer's figure divided by the number of briefs.

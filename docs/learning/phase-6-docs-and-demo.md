@@ -13,7 +13,7 @@ is deciding something different. Analogy: **one set of ingredients, four menus.*
 (so: how to run it, what it costs, what is broken). The demo's reader is a person with two minutes (so: one story and one honest ending). The blog's reader is a
 practitioner who wants a lesson (so: the finding, with the surprise). The interview sheet's reader is you, under pressure (so: numbers and answers you can say aloud).
 
-**Claims need evidence you can re-run.** "349 unit tests" is a claim; `python -m pytest -o addopts="" -v | grep -c PASSED` is the evidence. "93 resources" is a claim;
+**Claims need evidence you can re-run.** "383 unit tests" is a claim; `python -m pytest -o addopts="" -v | grep -c PASSED` is the evidence. "93 resources" is a claim;
 `terraform -chdir=infra/main state list | grep -vE '(^|\.)data\.' | wc -l` is the evidence (and a first attempt at that filter gave 110, because it
 counted module-level data sources; the number was right, the filter was wrong). Before you publish a number, run the command that produces it.
 
@@ -32,6 +32,8 @@ honest and defensible; claiming you typed every line is neither. The rule that p
 
 **A UI is a thin layer.** The web page calls the same `invoke` and the same `run_checks` as the command line. There is one path to the agent, so a fix or a test
 covers both. The page adds presentation only.
+
+**A diagram that cannot go stale.** A hand-drawn diagram is wrong the day after it is drawn. `scripts/make_diagram.py` draws the picture from code and reads its numbers (companies, documents, harness limits, model) from the data files and the Terraform, and tests check it: every component is present, no boxes overlap, text fits its box, every arrow starts and ends on a box edge. Those tests cannot see how the picture *looks*, though: the first render had no icons on four cards, because AWS's `_Dark` icon variants are white glyphs for dark backgrounds. Only opening the PNG showed it. Test what a machine can check, then look at the result yourself.
 
 **The dollar-sign trap.** Streamlit (like many Markdown renderers) typesets text between two `$` signs as a maths formula. A brief full of prices ("$1,168 ... $620") turns into
 garbled italics unless every `$` is escaped as `\$`. A test pins it.
@@ -57,6 +59,7 @@ garbled italics unless every `$` is escaped as `\$`. A test pins it.
 - [client/brief.py](../../client/brief.py): `company_error()` was split out of `clean_company()`. The command line exits with the message; the page shows it. One rule, two presenters.
 - [tests/unit/test_brief_app.py](../../tests/unit/test_brief_app.py): Streamlit's `AppTest` runs the real script in-process with the AWS call stubbed. Cases: opens without calling the agent; shows the brief and checks; escapes dollar signs;
   says so when the guardrail withheld the answer; warns on a cut-off brief; rejects bad names before any AWS call.
+- [scripts/make_diagram.py](../../scripts/make_diagram.py): builds `docs/images/architecture.svg` and `.png` with the official AWS Architecture Icons (downloaded once into the git-ignored `.cache/`; only the finished picture is committed). `read_facts()` pulls the numbers from the repo, `layout()` holds every box and arrow as data, `build_svg()` draws them, and headless Chrome takes the PNG. Run it with `make diagram`.
 - Housekeeping: the harness role still carried a permission to call Claude Haiku 4.5 for a comparison that was skipped. The default of `comparison_model_ids` is now `[]`, and the apply removed the unused statement (0 to add, 1 to change, 0 to destroy; read back from IAM, re-plan clean, one brief run afterwards still worked). Unused permissions are risk with no benefit.
 
 ---
@@ -76,6 +79,7 @@ garbled italics unless every `$` is escaped as `\$`. A test pins it.
    - The unknown-company example in the demo used a name nobody had tested; it now uses "Acme Rocketry", which the evaluation refused to invent a profile for in 3 of 3 runs.
 5. Everything above went through the leak scan (no account ID, no e-mail) before each commit.
 6. **More accounts, and a bug.** Four more demo companies were added (one Terraform apply, 4 rows, $0). One of them, Lighthouse Archive Trust, is deliberately a loser: the ROI model returns -11.7% and no breakeven. The first live brief for it was correct, and the client's `roi_numbers_match_tool` check failed on every figure. The check read numbers without their minus signs while the tool's figures were negative. No earlier account had lost, so the check had never seen a negative number. It was fixed test-first from the real brief; a deliberate break showed the new hyphen test really guards the regex. Left open on purpose: a loss written as a plain positive number still passes (exercise E12).
+7. **The architecture diagram.** Drawn with the official icons from code. The layout tests passed on the first run and the picture still had four invisible icons (the `_Dark` variants are white glyphs), a label crossing the AWS Cloud border and a cramped caption; all three were found by looking at the PNG. AWS has no dedicated icon for Guardrails, Knowledge Bases or Titan, so the Bedrock icon is used with a plain label rather than inventing artwork.
 
 ---
 

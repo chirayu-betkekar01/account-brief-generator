@@ -87,13 +87,15 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 | **Command-line client** | `python client/brief.py "Northwind Logistics"` prints the brief, then runs deterministic checks (links, AWS service names and every ROI figure against the tool results) | BUILT, run against the live agent |
 | **Streamlit web page** | `make ui`: the same call and checks as the command line, in a browser tab on your machine, with a dropdown of every company in `data/accounts.json` (re-read on each page run, so new companies appear on refresh) plus an "Other" choice for typing a name. Never published; a hosted version needs a gate in front first | BUILT, run once against the live agent |
 | **Infrastructure as code** | Terraform stacks and modules; `make plan / apply / destroy` | Both stacks LIVE: the budget, and the accounts table plus two Lambdas |
-| **Unit tests** | 349 tests (moto fake AWS, stubbed clients, four real agent answers as fixtures), plus a post-deploy smoke test (22 checks against the real functions) | BUILT and passing |
+| **Unit tests** | 383 tests (moto fake AWS, stubbed clients, four real agent answers as fixtures), plus a post-deploy smoke test (22 checks against the real functions) | BUILT and passing |
 
 ---
 
 ## 5. The architecture
 
 ### 5.1 The picture
+
+A drawn version with the official AWS icons is in [images/architecture.png](images/architecture.png); redraw it with `make diagram`. The Mermaid version below is the text equivalent.
 
 Colour key: green = LIVE (running in AWS now), blue = BUILT (runs on your laptop).
 
@@ -348,7 +350,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 | `client/` | The command-line client, the Streamlit page (`app.py`) and the checks |
 | `evaluation/`, `scripts/eval_agent.py` | The evaluation cases, rules, report and runner |
 | `data/eval_accounts.json` | Two red-team records with planted instructions (not demo data) |
-| `tests/` | 349 unit tests (fake AWS and recorded agent answers, no cost) |
+| `tests/` | 383 unit tests (fake AWS and recorded agent answers, no cost) |
 | `scripts/` | Price verification and the post-deploy smoke test |
 | `docs/costs.md` | Verified prices and the cost model |
 | `README.md` | The front door: problem, diagram, decisions, security, results, cost, how to run, limitations |
