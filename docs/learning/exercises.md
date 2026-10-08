@@ -283,6 +283,52 @@ says what remains exposed (strong); notes the cost of widening the ROI role (bon
 
 ---
 
+## E10. Same facts, three audiences (Phase 6, open)
+
+**Goal:** Practise choosing what to leave out. The evaluation found that typed attacks were refused 30 of 30 and tool-result attacks worked 6 of 6.
+
+**Spec:** Write that finding three times, 60 words or fewer each: (1) for a customer's CTO, (2) for a customer's CFO, (3) for a junior sales engineer who will demo the agent.
+Each version must state the finding, what it means for *that* reader, and one next step.
+
+**Hints:** The CTO cares about attack surface and fixes; the CFO about risk, cost and timing; the junior SE about what to say and what never to claim. Use no jargon the reader would have to look up.
+
+<details><summary>Model answer</summary>
+
+**CTO:** "Typed attacks were all refused, but an instruction planted in a database record steered the agent every time. The guardrail does not scan tool results. Fix: tools that take identifiers, not data, plus a gate in front that fixes the model, prompt and guardrail. Do this before connecting a real CRM."
+
+**CFO:** "The agent is safe against what people type, not against bad data it reads. Until that is fixed it should not touch real customer records. The fix is a bounded engineering change. I recommend we approve it before any pilot."
+
+**Junior SE:** "Say it refuses requests for personal data and off-topic questions, and that you tested it. Never say it is secure against prompt injection: we showed hidden instructions in data can steer it. If asked, say we found it, measured it, and know the fix."
+</details>
+
+**Review rubric:** each version differs in content, not just tone (must); one finding, one consequence, one next step (must); no jargon (strong); the CFO version avoids inventing a date or a price (bonus).
+
+---
+
+## E11. Audit the README (Phase 6, open)
+
+**Goal:** Learn to verify claims instead of trusting prose, including your own.
+
+**Spec:** For each claim below, say (a) where the evidence is, (b) the command or file that re-checks it, and (c) whether it is *measured*, *estimated* or *designed*.
+1. "329 unit tests." 2. "The main stack has 89 resources." 3. "Idle cost is $0 an hour." 4. "About $0.05 all-in per brief."
+5. "The agent obeyed a planted instruction 6 of 6 times." 6. "30 of 30 typed attacks were refused."
+
+**Hints:** Two of these cannot be proved by a command on your laptop alone. One of the commands has a trap in its filter.
+
+<details><summary>Model answer</summary>
+
+1. Measured. `python -m pytest -o addopts="" -v | grep -c PASSED` (329 at the end of Phase 6).
+2. Measured. `terraform -chdir=infra/main state list | grep -vE '(^|\.)data\.' | wc -l`. The trap: filtering only `^data\.` leaves module-level data sources in and gives 110.
+3. Designed. Evidence is the resource-by-resource table in `docs/costs.md` section 3 plus `make price-check`; the proof is the bill on a day with no use (Cost Explorer), which only AWS can show.
+4. Estimated. `docs/costs.md` section 4 and the runner's `ALL_IN_ESTIMATE`; the measured part is $0.011 of model tokens. Replace the estimate with Cost Explorer's figure divided by the number of briefs.
+5. Measured. `docs/evaluation-baseline.md` and the saved JSON in `evaluation/results/` (git-ignored, so reproduced by `python scripts/eval_agent.py --models nova --repeats 3 --only inj-tool-skip-roi,inj-tool-tamper-roi`); it is three runs of each of two cases, so "6 of 6" is a rough rate.
+6. Measured. Same report, "Which layer stopped the refusal cases"; also 23 of the 30 were the guardrail and 7 depended on the model.
+</details>
+
+**Review rubric:** correct measured/estimated/designed label for all six (must); a re-check for each that does not rely on "trust me" (must); spots that 3 and 4 need the bill (strong); finds the filter trap in 2 (bonus).
+
+---
+
 ## Planned exercises (documented now, run in the matching phase)
 
 ### P3. Write the Knowledge Base service-role IAM statement (Phase 3, build done; practise by redoing it)
@@ -318,7 +364,8 @@ Write four test prompts with expected behaviour: one PII-elicit, one off-topic, 
 prompt-injection. *Rubric:* each has a clear pass/fail rule that a script can check; at least one attacks the
 tool results rather than the user message.
 
-### P6. Write the "why this vector store" paragraph (Phase 6)
+### P6. Write the "why this vector store" paragraph (Phase 6, build done; practise by redoing it)
+The README's design-decisions table has this decision in one row (see [../../README.md](../../README.md)); write your paragraph *before* rereading it, then compare.
 Four sentences for the README: the decision, the alternatives, the deciding factors (cost shape, scale, features
 needed), and what would make you switch. *Rubric:* names the trade-off honestly (S3 Vectors is cheap per use but
 semantic-search only), gives numbers, states the switch trigger.
@@ -330,3 +377,5 @@ self-check step each helped a little. So the rubric's real test is not "does the
 **What the live evaluation taught about this exercise:** the interesting prompts are the ones that avoid the guardrail's obvious triggers ("include the CEO's name"
 is blocked before the model runs and so cannot test the model), and the attack that mattered was not typed at all: it sat inside a database record. Also: write the
 rule so that a script can decide, and check by reading one transcript that a failing case failed for the reason you think.
+**What writing the Phase 6 documents taught about this exercise:** the paragraph is only credible if every number in it can be re-run (S3 Vectors "about $0.06 per GB-month" is in `docs/costs.md` with its
+verification date) and if it names the cost of the choice (semantic search only, measured: a keyword-heavy question ranked the right document 4th). See also **E10** and **E11** above.

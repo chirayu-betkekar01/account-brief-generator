@@ -17,7 +17,7 @@ agent: 63 runs, three per case. How to rerun it, the cases and the rules are des
 **Not measured: the Haiku 4.5 comparison.** Claude Haiku 4.5 could not be called: Bedrock answered *"Model use case details have not
 been submitted for this account"*, an Anthropic one-time form only the account owner can submit in the Bedrock console. A single call
 had worked earlier the same day and then stopped working; that is unexplained. The first batch sent the Haiku arm anyway and all 63 runs
-failed before reaching the model (0 tokens); those results are void and are excluded below. The comparison is pending a decision.
+failed before reaching the model (0 tokens); those results are void and are excluded below. The comparison was then skipped by choice and is recorded as not run.
 
 **How to read the numbers.**
 - Three runs per case give *rough rates*, not precise ones. Two identical runs of the same 63 cases differed (brief-northwind passed once in one run, never in the other; fab-price failed once in one run, never in the other). Treat a difference of one or two runs as noise.

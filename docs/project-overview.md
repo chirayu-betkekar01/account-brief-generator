@@ -11,7 +11,7 @@ Read it top to bottom once; after that, use the headings as a reference.
 - **BUILT**: code written and tested on the laptop; waiting for the deploy approval.
 - **PLANNED**: designed, not yet built.
 
-*(Status as of 2026-10-07: everything except the final write-up is LIVE or BUILT: the budget alarm, accounts table, knowledge base, three tools, guardrail, AgentCore gateway and agent, and monitoring. The command-line client is BUILT and has been run against the live agent.)*
+*(Status as of 2026-10-07: all six phases are done. LIVE: the budget alarm, accounts table, knowledge base, three tools, guardrail, AgentCore gateway and agent, and monitoring. BUILT: the command-line client, the Streamlit page (both run against the live agent), the evaluation and the write-ups. Start with the [README](../README.md) if you are new to the repo.)*
 
 ---
 
@@ -83,11 +83,11 @@ The brief is meant to show that sensitivity, not hide it. And if AWS would cost 
 | **Guardrails** | Blocks 18 kinds of personal data, four off-topic subjects and prompt attacks; the grounding check runs after the answer but, measured, cannot tell faithful from ungrounded, so it is informational only | LIVE |
 | **Monitoring** | 14-day log retention, error and latency metrics for each tool, four alarms, one dashboard (agent traffic, tool latency, guardrail interventions, tokens) | LIVE |
 | **Cost controls** | $25 budget with 5 alerts; hard caps on agent steps (12), output tokens (6,000 per brief, 3,000 per model call) and time (180 s); memory off; microVM idle timeout 60 s | LIVE |
-| **Evaluation** | 21 cases (personal data, off-topic, fabrication bait, typed injection, two attacks planted inside tool results, five ordinary briefs) with mechanical pass/fail rules, run three times each; results in [docs/evaluation-baseline.md](evaluation-baseline.md) | BUILT; baseline measured (Nova 2 Lite). Haiku comparison pending |
+| **Evaluation** | 21 cases (personal data, off-topic, fabrication bait, typed injection, two attacks planted inside tool results, five ordinary briefs) with mechanical pass/fail rules, run three times each; results in [docs/evaluation-baseline.md](evaluation-baseline.md) | BUILT; baseline measured (Nova 2 Lite). Haiku comparison not run (blocked by an Anthropic account form; skipped by choice) |
 | **Command-line client** | `python client/brief.py "Northwind Logistics"` prints the brief, then runs deterministic checks (links, AWS service names and every ROI figure against the tool results) | BUILT, run against the live agent |
-| **Streamlit web page** | Optional | PLANNED (Phase 6) |
+| **Streamlit web page** | `make ui`: the same call and checks as the command line, in a browser tab on your machine. Never published; a hosted version needs a gate in front first | BUILT, run once against the live agent |
 | **Infrastructure as code** | Terraform stacks and modules; `make plan / apply / destroy` | Both stacks LIVE: the budget, and the accounts table plus two Lambdas |
-| **Unit tests** | 315 tests (moto fake AWS, stubbed clients, four real agent answers as fixtures), plus a post-deploy smoke test (22 checks against the real functions) | BUILT and passing |
+| **Unit tests** | 329 tests (moto fake AWS, stubbed clients, four real agent answers as fixtures), plus a post-deploy smoke test (22 checks against the real functions) | BUILT and passing |
 
 ---
 
@@ -225,7 +225,7 @@ sequenceDiagram
 | Component | Plain-English role | Analogy | Why this and not the alternative |
 |---|---|---|---|
 | **Amazon Bedrock** | AWS's service for using AI models | A switchboard to many models | One bill, IAM security, no keys to manage |
-| **Nova 2 Lite** (the model) | Reads the request, calls tools, writes the brief | The analyst | About $0.05-0.06 per brief; Amazon's own models need no extra subscription. Claude Haiku 4.5 is tested against it in Phase 5 |
+| **Nova 2 Lite** (the model) | Reads the request, calls tools, writes the brief | The analyst | About $0.05-0.06 per brief; Amazon's own models need no extra subscription. Claude Haiku 4.5 was not compared (blocked by an Anthropic account form, then skipped) |
 | **AgentCore Harness** | Runs the agent loop with limits on steps, tokens and time | A manager that stops the analyst going in circles | Bedrock Agents "Classic" is closed to new accounts (since 2026-07-30); AgentCore is its supported successor |
 | **AgentCore Gateway** | Exposes our Lambdas to the agent as tools | A reception desk that checks ID | Standard tool protocol (MCP) with IAM authentication, so no custom plumbing |
 | **Lambda** | Runs a small piece of code only when called | A vending machine | $0 while idle; a server would bill every hour |
@@ -290,7 +290,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 |---|---|---|
 | AgentCore harness and gateway | Bedrock Agents Classic | Classic is closed to new accounts |
 | S3 Vectors | OpenSearch Serverless, Aurora | Pay-per-use, no hourly floor; our data is about 1 MB |
-| Nova 2 Lite | Claude Haiku 4.5 | Cheaper and no subscription; measured against Haiku in Phase 5 |
+| Nova 2 Lite | Claude Haiku 4.5 | Cheaper and no subscription. Not measured against Haiku: that comparison was skipped |
 | The `us.` inference profile | The `global.` profile (about 10% cheaper) | Keeps inference in US regions and lets IAM name exact regions |
 | Maths in Python, not in the model | Letting the model calculate | Deterministic, testable, auditable |
 | Assumptions in a file, shown in output | Hard-coded numbers | A sceptical CFO can challenge each one |
@@ -305,7 +305,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 - **Synthetic data.** Five fictional companies; nothing is connected to a CRM or to real customers.
 - **The ROI model is deliberately simple.** No discounting, tax, risk adjustment or phased migration. Three of its five assumptions (right-sizing, migration effort, retained cost) are judgement calls that must be validated with a real customer.
 - **The grounding check does not work for this task.** Bedrock's grounding filter cannot run inside the agent, so the client runs it after the answer, and when tested it could not tell faithful sections from fabricated ones (a clean architecture section scored 0.17; one with five ungrounded services 0.05; even a section of verbatim ROI figures scored about 0.57). It is shown for information only. The client's deterministic checks do the real work.
-- **Those checks are blunt on purpose.** They compare words, not meaning, so a spelled-out name for an abbreviation in a passage ("AWS Identity and Access Management" for "IAM") is flagged. A false alarm is preferred to a missed ungrounded name, and the Phase 5 evaluation will measure how often each happens.
+- **Those checks are blunt on purpose.** They compare words, not meaning, so a spelled-out name for an abbreviation in a passage ("AWS Identity and Access Management" for "IAM") is flagged. A false alarm is preferred to a missed ungrounded name, and the Phase 5 evaluation measured it: of 13 briefs flagged by the strict check, 12 are still flagged under a looser match.
 - **The guardrail can be bypassed by an authorised caller** (per-call overrides, above). It is a default, not an enforcement point.
 - **Instructions hidden in data can steer the agent** (measured, 0 of 6 attacks resisted). The guardrail does not scan tool arguments or tool results, only the text of prompts and answers. The client now flags the one consequence it can detect (the ROI tool receiving numbers that differ from the profile); preventing it needs a design change (tools that take an identifier and look the facts up themselves), proposed in exercise E9.
 - **The company lookup is an exact match**, so punctuation breaks it ("Acme Inc." with a full stop is "not in the database"). The client quotes names to avoid this; a tolerant lookup is an open question.
@@ -314,7 +314,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 - **Off-topic blocking is a deny-list**, not an allow-list.
 - **Language models are not deterministic.** Two runs can differ; the evaluation measures pass rates rather than promising perfection.
 - **The budget warns, it doesn't stop.**
-- **Model quality is mixed.** Nova 2 Lite follows the format, copies numbers faithfully and refuses off-topic requests, but does not reliably obey "only name services you were given". Phase 5 compares it with Haiku 4.5.
+- **Model quality is mixed.** Nova 2 Lite follows the format, copies numbers faithfully and refuses off-topic requests, but does not reliably obey "only name services you were given". Haiku 4.5 was not compared (Bedrock required an Anthropic use-case form that only the account owner can submit, and the comparison was skipped).
 - **Sandbox shortcuts:** one admin user, local state, a single region.
 
 **What I would do for production:** a gate in front of the agent that fixes the model, prompt, tools and guardrail (an API in front, or a harness lifecycle hook that denies overrides) so callers cannot weaken them; per-person roles through IAM Identity Center; a remote Terraform state with locking; separate dev, test and production accounts with a CI/CD pipeline; budget actions plus Cost Anomaly Detection; a real CRM integration with row-level access control; private networking (VPC endpoints); encryption keys the customer controls; red-team testing and human review of output; and a proper evaluation set tracked over time.
@@ -328,9 +328,9 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 | 1 | Budget alarm, tooling, sign-in | **Done, LIVE** |
 | 2 | DynamoDB table, `account_profile` and `roi_estimator` Lambdas, tests, main Terraform stack | **Done, LIVE** (15 resources, deployed and smoke-tested 2026-10-07) |
 | 3 | Knowledge base: S3 docs bucket, S3 Vectors index, Titan embeddings, `kb_retrieve` | **Done, LIVE** (48 resources, 17 documents indexed, smoke-tested 2026-10-07) |
-| 4 | Guardrail, AgentCore gateway and harness, monitoring, command-line client | **Done, LIVE** (24 resources, verified 2026-10-07; the optional Streamlit page is in Phase 6) |
-| 5 | Evaluation (21 cases, 3 runs each), Nova 2 Lite vs Haiku 4.5 | **Baseline done** (63 runs, 2026-10-07). Haiku blocked by an Anthropic account form; the tool-result tampering fix is proposed |
-| 6 | README, 2-minute demo script, blog draft, one-page interview prep sheet | Planned |
+| 4 | Guardrail, AgentCore gateway and harness, monitoring, command-line client | **Done, LIVE** (24 resources, verified 2026-10-07) |
+| 5 | Evaluation (21 cases, 3 runs each), Nova 2 Lite vs Haiku 4.5 | **Baseline done** (63 runs, 2026-10-07). Haiku not run (Anthropic account form; skipped by choice). The tool-result tampering fix is proposed, not approved (exercise E9) |
+| 6 | README, 2-minute demo script, blog draft, one-page interview prep sheet, Streamlit page | **Done** (2026-10-07) |
 
 ---
 
@@ -345,12 +345,14 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 | `src/lambdas/roi_estimator/assumptions.json` | The ROI assumptions a CFO can read |
 | `data/accounts.json` | The five fictional companies |
 | `agent/system_prompt.md` | The agent's instructions: what it may do, the facts rules and the brief format |
-| `client/` | The command-line client and its checks |
+| `client/` | The command-line client, the Streamlit page (`app.py`) and the checks |
 | `evaluation/`, `scripts/eval_agent.py` | The evaluation cases, rules, report and runner |
 | `data/eval_accounts.json` | Two red-team records with planted instructions (not demo data) |
-| `tests/` | 315 unit tests (fake AWS and recorded agent answers, no cost) |
+| `tests/` | 329 unit tests (fake AWS and recorded agent answers, no cost) |
 | `scripts/` | Price verification and the post-deploy smoke test |
 | `docs/costs.md` | Verified prices and the cost model |
+| `README.md` | The front door: problem, diagram, decisions, security, results, cost, how to run, limitations |
+| `docs/demo-script.md`, `docs/blog-draft.md`, `docs/interview-prep.md` | The 2-minute demo, the blog post draft and the one-page interview sheet |
 | `docs/architecture.md` | The technical architecture draft |
 | `docs/learning/` and `LEARNING_NOTES.md` | Lessons, exercises, glossary, decisions, interview Q&A |
 | `Makefile` | `make plan`, `apply`, `destroy`, `smoke`, `test`, `brief COMPANY=...` |

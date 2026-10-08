@@ -104,7 +104,7 @@ not invented ones. The right word is **ungrounded**: not supported by the knowle
 **6. The Haiku 4.5 comparison could not run.** Bedrock answered "Model use case details have not been submitted for this account". That is an Anthropic form
 only the account owner can submit in the console. One tiny call worked earlier the same day and then stopped, which is unexplained. The first batch sent the
 Haiku arm anyway: 63 runs failed before reaching the model, cost nothing and are excluded. *Lesson: read the zero before the percentage. "0/15" next to "0 tokens"
-means the runs never happened.*
+means the runs never happened.* The comparison was then skipped by choice and is recorded as not run.
 
 **7. Two small engineering lessons.** Python buffers output when it is redirected to a file, so a long background run showed an empty log until the end (`python -u` fixes it).
 And the first report only recorded pass/fail for each check, not which service names were flagged, so I could not tell real from borderline cases until I changed the
@@ -114,7 +114,7 @@ recording to keep the detail and the tool results. Record enough to re-judge a r
 
 ## 5. Decisions and trade-offs
 See [LEARNING_NOTES.md](../../LEARNING_NOTES.md) rows 32 to 36. Headlines: mechanical rules over a model judge; three runs per case; red-team records in a separate file loaded by a
-flag; quoted company names; a client check on the ROI tool's received inputs. The open decisions (Haiku, and "pass identifiers, not data") are in the open questions.
+flag; quoted company names; a client check on the ROI tool's received inputs. Haiku was skipped; "pass identifiers, not data" is not approved and stays an open question (exercise E9).
 
 ---
 

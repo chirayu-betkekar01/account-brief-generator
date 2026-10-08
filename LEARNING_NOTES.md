@@ -74,6 +74,9 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | **Indirect prompt injection** | An instruction hidden in data the agent reads (a database field, a document) rather than typed by the user. The model cannot reliably tell data from instructions. The guardrail does not scan tool results. |
 | **Canary** | A unique marker planted in an attacker's instruction (CANARY-7F3A91). If it shows up in the answer, the instruction was obeyed. |
 | **Least agency (pass identifiers, not data)** | Design tools so the model passes only an ID (the company name) and the tool looks the facts up itself, so a manipulated model has nothing to tamper with. |
+| **Measured / estimated / designed** | The three kinds of number in the docs. Measured: observed (about $0.011 of model tokens per brief). Estimated: calculated, not yet confirmed (about $0.05 all-in). Designed: true because of how it is built ($0 idle). Say which one you are quoting. |
+| **Claims audit** | Checking each number or statement in a document against the repo with a command, before publishing. It caught six errors in our own first drafts. |
+| **AppTest (Streamlit)** | Streamlit's test harness: runs the real page script in-process so a test can click a button and read what was shown. Used with the AWS call stubbed. |
 | **Ungrounded** | Stated but not supported by the sources the answer is meant to rest on. Not the same as untrue: most flagged AWS services were real, recommended from memory. |
 
 *(More terms are added as each phase introduces them: Lambda, DynamoDB, embeddings, RAG, Guardrails, AgentCore, MCP, inference profile, ...)*
@@ -120,6 +123,10 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 34 | **Red-team records in the real table, loaded by `include_eval_fixtures` (default true)** | Mocking the tool output; mixing them into the demo data | Tests the real path (Gateway, Lambda, DynamoDB, model) while keeping the five demo accounts clean. | Fixtures that must never touch a shared table: use a separate table. |
 | 35 | **Company names quoted in prompts** | Leave punctuation to the model | The lookup is an exact match, and "Test Co." lost two cases to a trailing full stop. Same trap for a real "Acme Inc.". | Making the lookup tolerant (strip trailing punctuation) or the tool take an ID. |
 | 36 | **Client check: the ROI tool's echoed inputs must equal the profile** | Trusting that a brief which matches the tool output is right | A planted instruction made the agent send servers=1; the brief agreed with the wrong tool output. | Preventing it structurally (decision pending, see open questions). |
+| 37 | **Streamlit page run locally, sharing the CLI's invoke and checks; never published** | A hosted site; a public Streamlit URL | One code path to the agent. Publishing a page that can call the harness would expose it (callers can override the guardrail), so a hosted version needs a real gate first. | A gate in front exists and users authenticate through an identity provider. |
+| 38 | **Remove the unused Haiku 4.5 permission (`comparison_model_ids` defaults to `[]`)** | Leave it in case the comparison runs later | The comparison was skipped; an unused permission is risk with no benefit. Plan: 0 to add, 1 to change, 0 to destroy. *(Plan saved 2026-10-07; apply awaits approval.)* | The comparison is run: set the variable back, submit the Anthropic form first. |
+| 39 | **Disclose AI-assisted authorship in the README, blog and interview sheet** | Say nothing, or claim it was hand-written | Honest, defensible, and the interview question is coming anyway. The user's contribution (constraints, approvals, scope calls, decisions on record) is stated. | n/a |
+| 40 | **Label every number measured, estimated or designed, and re-run its command before publishing** | Quote figures from memory | Six claims in the first drafts were wrong or unsupported (module count, 3x price, ROI lines, model-access sentence, blog length, untested demo example). | n/a |
 
 ---
 
@@ -187,6 +194,18 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
   6. Read a zero before the percentage: 0 of 15 next to 0 tokens means the runs never happened.
   7. Record enough (check details, tool results) to re-judge a run later.
 
+### Phase 6: communicating the project *(2026-10-07; full notes in `docs/learning/phase-6-docs-and-demo.md`)*
+- Built and committed: `README.md` (problem, diagram, decisions, security model, evaluation, cost, run steps, limitations, production plan), `docs/demo-script.md` (about 300 words), `docs/blog-draft.md` (872 words, first person), `docs/interview-prep.md`, a Streamlit page (`make ui`) with 14 new tests (329 in total), and the Phase 6 lesson with exercises E10 and E11.
+- Decisions: the Haiku comparison is recorded as not run (skipped by the user); the "pass identifiers, not data" fix was NOT approved and stays documented as E9 and an open question; the unused Haiku permission is queued for removal (plan saved, awaiting approval).
+- Verified live: the web page, once, against the deployed agent (31 s, no errors).
+- Lessons banked:
+  1. Write for one reader per document; the same facts get four different tellings.
+  2. Run the command behind every number before publishing it: the audit caught a wrong module count, a wrong price ratio, a wrong line count, an unverified sentence, an over-length blog and an untested demo example.
+  3. A filter can be wrong while the number is right: `grep -v '^data\.'` gave 110 resources, the correct filter gave 89.
+  4. Markdown renderers treat `$...$` as maths; a brief full of prices must escape `$`.
+  5. A test must fail for the right reason first (our stub tried to set an attribute on a list).
+  6. Disclose how the work was built, and only claim what you can explain.
+
 ---
 
 ## 4. Interview Q&A
@@ -214,6 +233,9 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 5 | Your evaluation reported failures. How do you know they are real? | *(model answer)* | | Read the transcript first. Ours were wrong at first: a trailing full stop broke an exact-match lookup, so the attack never ran. After the fix the same cases failed for the real reason: the attacks worked. |
 | 5 | What is indirect prompt injection and how do you defend against it? | *(model answer)* | | An instruction hidden in data the agent reads. Remove the opportunity (tools take identifiers, not facts), least-privilege tools, compare what was sent with the source of truth, sanitise untrusted data, human in the loop. Prompts help a little; the guardrail does not scan tool results. |
 | 5 | Your guardrail stopped everything you threw at it. Are you done? | *(model answer)* | | No: 7 of 30 refusals depended on the model; the guardrail is a per-call-overridable default; and the successful attack came through tool results, which it does not scan. Strong against typed attacks, weak against hidden ones. |
+| 6 | Walk me through the project in two minutes. | *(model answer)* | | Problem; three rules (numbers from code, advice from sources, "I don't know" is an answer); serverless design with the budget first; the evaluation; the finding to remember: typed attacks refused 30 of 30, hidden instructions in data worked 6 of 6. Pitch in `docs/interview-prep.md`. |
+| 6 | How much of this did you write yourself? | *(model answer)* | | "I directed it with Claude Code as pair programmer: I set the constraints, approved each deploy from a reviewed plan, and made the scope calls. The decisions and reasons are in the repo and I can walk through any of them." Then do it; say what you are still learning. |
+| 6 | How would you let a customer's sales team use this? | *(model answer)* | | Not the local page. An API in front that fixes model, prompt, tools and guardrail; the customer's identity provider; per-user roles limited to their accounts; logging; human review until the evaluation shows an acceptable error rate. |
 
 ---
 
@@ -229,6 +251,6 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 - **Does a stronger model obey "only name services you were given"?** Nova 2 Lite did not, reliably. *(Phase 5: Haiku 4.5 on the same checks)*
 - **Alias handling in the service-name check.** Exercise E8. How much does it reduce false alarms without letting a genuinely ungrounded name through?
 - **Real cost per brief.** Model tokens measured at about $0.011; guardrail and runtime shares come from Cost Explorer. *(check 2026-10-08, then after the Phase 5 batch)*
-- **Haiku 4.5 comparison.** Blocked by an Anthropic use-case form only the account owner can submit in the Bedrock console (one earlier call worked, then none did: unexplained). Options: submit the form and re-run the Haiku arm (about $2.5 all-in); substitute a stronger Amazon model that needs no form; or skip. *(awaiting the user's decision)*
+- **Haiku 4.5 comparison.** Blocked by an Anthropic use-case form only the account owner can submit in the Bedrock console (one earlier call worked, then none did: unexplained). Options: submit the form and re-run the Haiku arm (about $2.5 all-in); substitute a stronger Amazon model that needs no form; or skip. *(decided 2026-10-07: skipped by the user; recorded as not run. The Haiku permission is queued for removal.)*
 - **Closing the tool-result tampering hole by design.** Proposal: the ROI tool takes only `company_name` and reads the profile itself (needs a `GetItem` statement on the ROI role, a Lambda change, a schema change and a prompt change; one Terraform apply). It removes the tampering attack by construction; the canary-printing half of the attack (attacker-chosen text in the answer) needs a different defence. Exercise E9. *(awaiting the user's decision)*
 - **A tolerant company lookup.** The lookup is exact, so punctuation breaks it. Strip trailing punctuation in `normalise`, or accept it as a safe failure ("not in the database")?

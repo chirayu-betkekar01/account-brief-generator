@@ -117,7 +117,7 @@ Projected spend by phase (Nova 2 Lite, conservative):
 | 3 | Knowledge base ingestion and retrieval tests | under $0.05 |
 | 4 | Deploy, about 20 smoke-test briefs | about $1.2 |
 | 5 | Evaluation: about 15 runs of 12 prompts (many are refused cheaply) | about $6 |
-| 5 | One model comparison (Haiku 4.5 vs Nova 2 Lite) | about $1.2 |
+| 5 | One model comparison (Haiku 4.5 vs Nova 2 Lite) | about $1.2 (not run: blocked by an Anthropic account form, then skipped) |
 | 6 | Demo rehearsal and recording, about 10 briefs | about $0.6 |
 | | **Expected total** | **about $9-10** |
 | | **With a 2x safety margin** | **about $20, under the $25 ceiling** |
@@ -159,3 +159,4 @@ completed the next day.
 | 2026-10-07 | Phase 3 applied: S3 docs bucket (34 files), S3 Vectors bucket and index, Bedrock knowledge base, `kb_retrieve`; one ingestion job (17 documents, about 4,000 tokens embedded); about 40 test searches | under $0.01 | *check 2026-10-08* |
 | 2026-10-07 | Phase 4 applied (24 resources): guardrail, AgentCore gateway + 3 targets, harness, roles, monitoring. Testing: about 9 full brief runs (several unguarded, one cut off at 1,000 tokens, one withheld by the guardrail), about 45 `ApplyGuardrail` calls, 7 adversarial prompts, 2 shell A/B runs | about $0.3-0.5 | *check 2026-10-08* |
 | 2026-10-07 | Phase 5: 2 DynamoDB items and 1 IAM statement applied ($0); about 250 evaluation runs (a 21-run pass, a 126-run batch of which the 63 Haiku runs failed before reaching the model, a 4-run re-check, a 63-run baseline) plus a few probes; model tokens about $0.67 | about $1.5-2.0 all-in | *check 2026-10-08* |
+| 2026-10-07 | Phase 6: one live run of the Streamlit page (one brief, about 21,000 input and 1,300 output tokens expected); no infrastructure change applied. A plan to remove the unused Haiku IAM statement is saved, not applied | about $0.05 | *check 2026-10-08* |
