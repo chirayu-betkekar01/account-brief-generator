@@ -2,7 +2,7 @@
 
 Before a first customer meeting, a solutions architect spends hours on the same questions. Who are they? What do they run? What will they worry about? What should I ask? What could the cloud save them, and what could go wrong?
 
-I come from a value-engineering background, so I built an agent that does that first pass: you give it a company name and it returns a six-section discovery brief. It runs on Amazon Bedrock AgentCore, costs nothing while idle, and I measured how it fails. The failures turned out to be the interesting part.
+I come from a value-engineering background, so I built Presales Accelerator, an account brief generator that does that first pass: you give it a company name and it returns a six-section discovery brief. It runs on Amazon Bedrock AgentCore, costs nothing while idle, and I measured how it fails. The failures turned out to be the interesting part.
 
 ## Three rules for a pre-sales agent
 

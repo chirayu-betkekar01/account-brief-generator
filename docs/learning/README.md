@@ -1,4 +1,4 @@
-# Learning guide: Discovery Brief & ROI Agent
+# Learning guide: Presales Accelerator (Account Brief Generator)
 
 This folder turns the project into a course. The build moves fast; the teaching is kept here so you can
 study it later, in conversation with Claude, at your own pace.

@@ -1,4 +1,4 @@
-"""A small web page for the discovery brief agent.
+"""A small web page for Presales Accelerator (the discovery brief agent).
 
     make ui
 
@@ -68,8 +68,8 @@ def show_run(company, run):
             st.json(arguments if isinstance(arguments, dict) else {"unparseable input": arguments})
 
 
-st.set_page_config(page_title="Discovery Brief Agent", page_icon="📝")
-st.title("Discovery brief & ROI agent")
+st.set_page_config(page_title="Presales Accelerator", page_icon="📝")
+st.title("Presales Accelerator: Account Brief Generator")
 st.caption("Fictional companies only. Pick one, or choose Other to type a name.")
 
 # The list is read from data/accounts.json on every page run, so a company added there appears on the next

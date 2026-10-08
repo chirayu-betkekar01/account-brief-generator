@@ -1,6 +1,6 @@
-# Interview prep: Discovery Brief & ROI Agent (one page)
+# Interview prep: Presales Accelerator (Account Brief Generator), one page
 
-**60-second pitch.** "I built an agent on Amazon Bedrock AgentCore that prepares a pre-sales discovery brief from a company name. It looks up a synthetic account, retrieves sourced AWS best practice, and runs a 3-year ROI model written in plain Python, so the numbers are code, not model output. It's serverless and costs nothing idle, I deployed the budget alarm first, and I evaluated it with 21 cases including attacks. The finding I'd stress: it resisted every typed attack, but an instruction hidden in a database record steered it 6 times out of 6."
+**60-second pitch.** "I built Presales Accelerator, an agent on Amazon Bedrock AgentCore that prepares a pre-sales discovery brief from a company name. It looks up a synthetic account, retrieves sourced AWS best practice, and runs a 3-year ROI model written in plain Python, so the numbers are code, not model output. It's serverless and costs nothing idle, I deployed the budget alarm first, and I evaluated it with 21 cases including attacks. The finding I'd stress: it resisted every typed attack, but an instruction hidden in a database record steered it 6 times out of 6."
 
 **Architecture in five bullets**
 - Client signs `InvokeHarness` with IAM. The **harness** runs Nova 2 Lite in a loop (caps: 12 steps, 6,000 tokens, 180 s) and screens every call with a **guardrail**.

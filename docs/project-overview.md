@@ -1,4 +1,4 @@
-# Discovery Brief & ROI Agent: project overview
+# Presales Accelerator: Account Brief Generator: project overview
 
 A plain-English guide to what we are building, why, and how the pieces fit together.
 Read it top to bottom once; after that, use the headings as a reference.

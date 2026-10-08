@@ -1,4 +1,4 @@
-# Learning notes: Discovery Brief & ROI Agent
+# Learning notes: Presales Accelerator (Account Brief Generator)
 
 A living study guide. Each phase adds glossary terms, decisions and tradeoffs, and interview Q&A.
 At the end it is distilled into `docs/interview-prep.md` (one page).
@@ -130,6 +130,7 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 | 41 | **The demo set includes one account that loses money (Lighthouse Archive Trust)** | Nine winners | The tool is meant to report a loss as it is, and a demo where everyone wins never shows it. It also exposed a checker bug the first time it ran (see 42). Pinned by a test, so changed assumptions cannot quietly turn it into a winner. | n/a |
 | 42 | **The ROI-figure check reads minus signs; an unsigned figure matches on size** | Compare absolute values only; require exact signs | Absolute-only would accept a minus sign added to a gain. Exact signs would flag the natural phrase "a loss of $219,288". The middle path flags an added minus and accepts an unsigned loss. **Known gap:** a loss written as a plain positive number passes (exercise E12). | A measured miss on real briefs. |
 | 43 | **Company dropdown built from `data/accounts.json`, re-read on every page run, with an "Other" choice** | A free text box; a Streamlit cache; scanning DynamoDB | One shared reader for page and tests; no cache, so new companies show up on refresh; the red-team records stay out of the demo list. The DynamoDB scan would give the true "available" list but needs an extra permission the page otherwise does not. Cost: a company added to the file can be picked before it is applied, and the agent then says it is not in the database. "Other" keeps the unknown-company and attack demos possible. | A hosted page, where the list should come from the service, not a file. |
+| 44 | **Product name: Presales Accelerator: Account Brief Generator** (display text only) | "Discovery Brief & ROI Agent"; a catchy brand (Groundwork, Preflight, Receipts); words like Verified or Trusted | Enterprise tone: the brand names the benefit (hours of prep become seconds) and the descriptor says what it produces. Avoided "Navigator" (LinkedIn's Sales Navigator), "Evaluator" (AWS Migration Evaluator) and any trust claim, because the evaluation shows 1 of 15 briefs passing every check and 0 of 6 tool-result attacks resisted. AWS resource names, Terraform descriptions and the agent's system prompt keep the old names: changing them would alter or rebuild deployed resources. | Trademark or domain clash found, or a customer-facing launch. |
 
 ---
 

@@ -68,7 +68,7 @@ def test_the_page_opens_with_every_company_in_a_dropdown_and_does_not_call_the_a
     app = start()
     assert not app.exception
     assert asked == []
-    assert app.title[0].value.startswith("Discovery brief")
+    assert app.title[0].value == "Presales Accelerator: Account Brief Generator"
     options = app.selectbox[0].options
     assert options[:-1] == companies_in_the_data_file()  # all of them, in the file's order
     assert options[-1].startswith("Other")

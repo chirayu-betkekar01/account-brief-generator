@@ -1,6 +1,8 @@
-# Discovery Brief & ROI Agent
+# Presales Accelerator: Account Brief Generator
 
-An AI agent on **Amazon Bedrock AgentCore** that prepares a pre-sales discovery brief in about a minute. You give it a (fictional) company name. It looks up the account, retrieves AWS best practice with source links, estimates a 3-year ROI with a deterministic calculator, and writes a six-section brief. Everything is Terraform, serverless, and costs $0 while idle.
+*Repository: `discovery-brief-agent`. What it produces is called a **discovery brief**.*
+
+Presales Accelerator is an AI agent on **Amazon Bedrock AgentCore** that prepares a pre-sales discovery brief in about a minute. You give it a (fictional) company name. It looks up the account, retrieves AWS best practice with source links, estimates a 3-year ROI with a deterministic calculator, and writes a six-section brief. Everything is Terraform, serverless, and costs $0 while idle.
 
 It is also an exercise in doing an AI project the way a customer would need it done: a budget alarm before any spend, least-privilege roles, a measured evaluation including attacks, and honest documentation of what does not work.
 
