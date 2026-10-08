@@ -1,11 +1,12 @@
 """A small web page for the discovery brief agent.
 
-    streamlit run client/app.py
+    make ui
 
 It calls the same code as the command line (client/brief.py), so it needs the same things: AWS
 credentials allowed to call the harness (for example AWS_PROFILE=discovery-sandbox) and the harness
 ARN, from HARNESS_ARN or from `terraform output`. Everything runs on your machine; the page is not
-published anywhere.
+published anywhere. `make ui` binds to localhost because Streamlit's default listens on every
+network interface, and anyone who could open the page could run briefs on your AWS credentials.
 """
 
 import json

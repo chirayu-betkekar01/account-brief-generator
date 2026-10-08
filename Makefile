@@ -75,7 +75,7 @@ brief:
 	$(PY) client/brief.py "$(COMPANY)" $(ARGS)
 
 ui:
-	$(PY) -m streamlit run client/app.py
+	$(PY) -m streamlit run client/app.py --server.address localhost --browser.gatherUsageStats false
 
 test:
 	$(PY) -m pytest
