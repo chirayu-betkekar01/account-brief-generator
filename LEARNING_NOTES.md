@@ -251,7 +251,7 @@ At the end it is distilled into `docs/interview-prep.md` (one page).
 
 ## 5. Open questions
 
-- Does the AgentCore harness expose tool results in its stream (needed for the post-answer grounding check)? *(Phase 4)*
+- ~~Does the AgentCore harness expose tool results in its stream?~~ **Resolved in Phase 4: yes** (`toolResult` blocks, stop reason `tool_result`); the client's checks depend on it.
 - Which AgentCore microVM generation (v1 or v2) does the harness bill at? *(measure in Phase 4)*
 - **Data provenance and ranges.** Should each ROI input carry a source label (customer-stated / benchmark / unknown) and should the tool return low/base/high cases, with the most sensitive assumption driving the first discovery question? *(proposed for Phase 4; add a provenance note to the overview limitations)*
 - Phase 1 leftovers: the IAM statement (E1) and Q2 remain open in `docs/learning/exercises.md`.

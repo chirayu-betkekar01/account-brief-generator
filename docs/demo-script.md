@@ -29,7 +29,7 @@ The stack costs $0 idle but `make destroy` removes it, so after a break it has t
 
 ## Optional beats (only if you have 10 seconds to spare; pick one)
 
-**The honest loss.** Ask the page for `Lighthouse Archive Trust`. It is a storage-heavy archive that is cheap to run on premises, so the ROI tool returns about -11.7% with no breakeven, and the brief reports that plainly (live run, 2026-10-07: 10 of 11 checks passed). "The numbers come from code, and code is allowed to say no."
+**The honest loss.** Ask the page for `Lighthouse Archive Trust`. It is a storage-heavy archive that is cheap to run on premises, so the ROI tool returns about -11.7% with no breakeven, and the brief reports that plainly (live run, 2026-10-07: the brief was correct; an earlier version of the ROI-figure check wrongly flagged its negative figures, which is fixed). "The numbers come from code, and code is allowed to say no."
 
 **The unknown company.**
 Choose **Other** in the dropdown and type `Acme Rocketry` (tested in the evaluation: refused to invent a profile in 3 of 3 runs). It is not in the database; the agent should say so instead of inventing a profile. "An unknown company gets 'not in the database', never a made-up one."
