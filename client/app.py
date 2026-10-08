@@ -9,21 +9,14 @@ published anywhere. `make ui` binds to localhost because Streamlit's default lis
 network interface, and anyone who could open the page could run briefs on your AWS credentials.
 """
 
-import json
 import os
-from pathlib import Path
 
 import streamlit as st
 
 import brief
 from brief_checks import run_checks
 
-ACCOUNTS = Path(__file__).resolve().parents[1] / "data" / "accounts.json"
-
-
-def demo_companies():
-    accounts = json.loads(ACCOUNTS.read_text(encoding="utf-8"))["accounts"]
-    return [account["company_name"] for account in accounts]
+OTHER = "Other (type a name)..."  # always the last choice: for a company that is not listed, e.g. to test "not in the database"
 
 
 def harness_arn():
@@ -77,9 +70,15 @@ def show_run(company, run):
 
 st.set_page_config(page_title="Discovery Brief Agent", page_icon="📝")
 st.title("Discovery brief & ROI agent")
-st.caption("Fictional companies only. Try: " + ", ".join(demo_companies()) + ".")
+st.caption("Fictional companies only. Pick one, or choose Other to type a name.")
 
-company = st.text_input("Company name", value="Northwind Logistics")
+# The list is read from data/accounts.json on every page run, so a company added there appears on the next
+# refresh. The first company is the default.
+names = brief.demo_companies()
+if not names:
+    st.warning("Could not read the company list (data/accounts.json), so type a company name instead.")
+choice = st.selectbox("Company", [*names, OTHER])
+company = st.text_input("Company name") if choice == OTHER else choice
 if st.button("Prepare brief", type="primary"):
     problem = brief.company_error(company)
     if problem:

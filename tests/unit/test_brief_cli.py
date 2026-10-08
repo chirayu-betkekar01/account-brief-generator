@@ -99,3 +99,42 @@ def test_company_error_explains_what_is_wrong(name):
 def test_the_company_name_is_trimmed(stub):
     brief.main(["  Northwind Logistics  "])
     assert stub["asked"][0][1] == "Northwind Logistics"
+
+
+# --- The company list shared by the web page's dropdown --------------------------------------------
+
+
+def _write_accounts(path, *names):
+    path.write_text(json.dumps({"accounts": [{"company_name": n} for n in names]}), encoding="utf-8")
+
+
+def test_demo_companies_lists_the_companies_in_file_order(tmp_path):
+    file = tmp_path / "accounts.json"
+    _write_accounts(file, "Zeta Co", "Alpha Co")
+    assert brief.demo_companies(file) == ["Zeta Co", "Alpha Co"]
+
+
+def test_demo_companies_picks_up_a_company_added_later(tmp_path):
+    file = tmp_path / "accounts.json"
+    _write_accounts(file, "Alpha Co")
+    assert brief.demo_companies(file) == ["Alpha Co"]
+    _write_accounts(file, "Alpha Co", "Beta Co")  # nothing is cached, so a later call sees the new file
+    assert brief.demo_companies(file) == ["Alpha Co", "Beta Co"]
+
+
+@pytest.mark.parametrize(
+    "content",
+    [None, "not json", "{}", '{"accounts": "nope"}', '{"accounts": [{"industry": "no name"}, 7, {"company_name": "  "}]}'],
+)
+def test_demo_companies_is_empty_when_the_file_is_missing_or_unusable(tmp_path, content):
+    file = tmp_path / "accounts.json"
+    if content is not None:
+        file.write_text(content, encoding="utf-8")
+    assert brief.demo_companies(file) == []
+
+
+def test_the_real_data_file_lists_northwind_first_and_no_red_team_records():
+    names = brief.demo_companies()
+    assert names[0] == "Northwind Logistics"
+    assert "Lighthouse Archive Trust" in names
+    assert not [n for n in names if n.endswith("Test Co")]  # those live in data/eval_accounts.json

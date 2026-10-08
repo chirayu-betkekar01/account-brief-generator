@@ -13,6 +13,7 @@ harness ARN comes from HARNESS_ARN or from `terraform output`.
 """
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -31,6 +32,7 @@ MAX_COMPANY_LENGTH = 100  # same limit the account_profile Lambda enforces
 # Nova 2 Lite, US geo profile, $ per million tokens (docs/costs.md, verified 2026-10-07).
 PRICE_IN_PER_M, PRICE_OUT_PER_M = 0.33, 2.75
 ROOT = Path(__file__).resolve().parents[1]
+ACCOUNTS_FILE = ROOT / "data" / "accounts.json"  # the demo companies; the red-team records are in eval_accounts.json
 
 
 def terraform_output(name):
@@ -41,6 +43,23 @@ def terraform_output(name):
     if result.returncode != 0:
         sys.exit(f"Could not read terraform output {name!r}. Is the stack deployed? {result.stderr.strip()[:200]}")
     return result.stdout.strip()
+
+
+def demo_companies(path=None):
+    """Company names in data/accounts.json, in file order; [] if the file is missing or unusable.
+
+    Read on every call and never cached, so a company added to the file shows up on the web page's
+    next run. (It can be chosen before it is loaded into DynamoDB; the agent then says it is not in
+    the database, which is a harmless failure.)"""
+    try:
+        accounts = json.loads(Path(path or ACCOUNTS_FILE).read_text(encoding="utf-8"))["accounts"]
+        return [
+            a["company_name"]
+            for a in accounts
+            if isinstance(a, dict) and isinstance(a.get("company_name"), str) and a["company_name"].strip()
+        ]
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
 
 
 def company_error(name):
