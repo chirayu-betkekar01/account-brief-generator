@@ -17,9 +17,9 @@ variable "include_eval_fixtures" {
 }
 
 variable "comparison_model_ids" {
-  description = "Extra inference profiles the agent role may call, used only by the Phase 5 model comparison via a per-call override. Empty list grants nothing beyond the main model."
+  description = "Extra inference profiles the agent role may call, used only for a model comparison via a per-call override. Empty (the default) grants nothing beyond the main model; the Haiku 4.5 comparison was not run, so its permission was removed. To run one: [\"us.anthropic.claude-haiku-4-5-20251001-v1:0\"] (and submit Anthropic's use-case form in the Bedrock console first)."
   type        = list(string)
-  default     = ["us.anthropic.claude-haiku-4-5-20251001-v1:0"]
+  default     = []
 }
 
 variable "alarm_email" {

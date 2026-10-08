@@ -57,7 +57,7 @@ garbled italics unless every `$` is escaped as `\$`. A test pins it.
 - [client/brief.py](../../client/brief.py): `company_error()` was split out of `clean_company()`. The command line exits with the message; the page shows it. One rule, two presenters.
 - [tests/unit/test_brief_app.py](../../tests/unit/test_brief_app.py): Streamlit's `AppTest` runs the real script in-process with the AWS call stubbed. Cases: opens without calling the agent; shows the brief and checks; escapes dollar signs;
   says so when the guardrail withheld the answer; warns on a cut-off brief; rejects bad names before any AWS call.
-- Housekeeping: the harness role still carried a permission to call Claude Haiku 4.5 for a comparison that was skipped. The default of `comparison_model_ids` is now `[]`, and a plan removes the unused statement (0 to add, 1 to change, 0 to destroy). Unused permissions are risk with no benefit.
+- Housekeeping: the harness role still carried a permission to call Claude Haiku 4.5 for a comparison that was skipped. The default of `comparison_model_ids` is now `[]`, and the apply removed the unused statement (0 to add, 1 to change, 0 to destroy; read back from IAM, re-plan clean, one brief run afterwards still worked). Unused permissions are risk with no benefit.
 
 ---
 
