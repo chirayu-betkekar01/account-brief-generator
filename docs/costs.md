@@ -139,10 +139,11 @@ Projected spend by phase (Nova 2 Lite, conservative):
 | `make destroy` | Removes the whole main stack, keeps the budget | Added with the main stack |
 | `make destroy-all` | Removes the main stack, then the budget | Added with the main stack |
 
-After Phase 4, `make destroy` removes all 87 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
+After Phase 5, `make destroy` removes all 89 resources of the main stack (15 from Phase 2: table, rows, 2 Lambdas,
 roles, policies, log groups, budget guard; 48 from Phase 3: docs bucket and 34 files, vector bucket and index,
 knowledge base and data source, service role, `kb_retrieve`; 24 from Phase 4: guardrail and version, gateway and 3
-targets, harness, two roles and policies, invoker policy, harness log group, 6 metric filters, 4 alarms, 1 dashboard).
+targets, harness, two roles and policies, invoker policy, harness log group, 6 metric filters, 4 alarms, 1 dashboard;
+2 from Phase 5: the red-team records in the accounts table).
 All of them cost $0 while idle; the budget stays. Note that old guardrail versions are kept on purpose
 (`skip_destroy`), but they are deleted together with the guardrail itself on a full destroy.
 

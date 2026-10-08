@@ -339,7 +339,7 @@ The full table, with "what would change my mind" for each, is in [LEARNING_NOTES
 | Path | What is there |
 |---|---|
 | `infra/bootstrap/` and `infra/modules/budget/` | The budget alarm stack (LIVE) |
-| `infra/main/` | The main stack: wires all the modules below together (87 resources) |
+| `infra/main/` | The main stack: wires all the modules below together (89 resources) |
 | `infra/modules/` | `storage_data`, `lambda_function`, `knowledge_base`, `guardrails`, `agent`, `monitoring`, `budget` |
 | `src/lambdas/account_profile/`, `src/lambdas/roi_estimator/` | The tool code |
 | `src/lambdas/roi_estimator/assumptions.json` | The ROI assumptions a CFO can read |
